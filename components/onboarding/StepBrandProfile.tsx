@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
-import { startOnboarding, sendOnboardingMessage } from "@/lib/api";
+import { api } from "@/lib/api";
 
 const SEGMENTS = [
   "Construção civil",
@@ -44,16 +44,12 @@ export function StepBrandProfile({ onNext }: StepBrandProfileProps) {
     setLoading(true);
     setError(null);
     try {
-      await startOnboarding();
-      const message = [
-        `Empresa: ${form.company}`,
-        `Segmento: ${form.segment}`,
-        `Tom de voz: ${form.tone}`,
-        form.colors ? `Cores da marca: ${form.colors}` : "",
-      ]
-        .filter(Boolean)
-        .join("\n");
-      await sendOnboardingMessage(message);
+      await api.post("/onboarding/setup", {
+        company_name: form.company.trim(),
+        segment: form.segment,
+        tone: form.tone,
+        colors: form.colors.trim(),
+      });
       onNext();
     } catch {
       setError("Erro ao salvar. Tente novamente.");
@@ -73,7 +69,7 @@ export function StepBrandProfile({ onNext }: StepBrandProfileProps) {
           value={form.company}
           onChange={(e) => setForm({ ...form, company: e.target.value })}
           placeholder="Ex: Espectra Construção"
-          className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
         />
       </div>
 
@@ -84,7 +80,7 @@ export function StepBrandProfile({ onNext }: StepBrandProfileProps) {
         <select
           value={form.segment}
           onChange={(e) => setForm({ ...form, segment: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+          className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
         >
           <option value="">Selecione o segmento</option>
           {SEGMENTS.map((s) => (
@@ -127,7 +123,7 @@ export function StepBrandProfile({ onNext }: StepBrandProfileProps) {
           value={form.colors}
           onChange={(e) => setForm({ ...form, colors: e.target.value })}
           placeholder="Ex: azul escuro e dourado"
-          className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
         />
       </div>
 
