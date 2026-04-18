@@ -1,29 +1,15 @@
 "use client";
 
-import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Camera, LogOut, History } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useContentRequests } from "@/hooks/useContentRequests";
 import { PostCard } from "@/components/dashboard/PostCard";
-import { getOnboardingStatus, getMetaStatus } from "@/lib/api";
 
 export default function DashboardPage() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const { posts, error, loading, refresh } = useContentRequests();
-
-  // Redireciona para onboarding apenas se nem onboarding concluído nem Instagram conectado
-  useEffect(() => {
-    Promise.all([
-      getOnboardingStatus().catch(() => ({ status: "unknown" })),
-      getMetaStatus().catch(() => ({ connected: false })),
-    ]).then(([onboarding, meta]) => {
-      if (onboarding.status !== "done" && !meta.connected) {
-        router.replace("/onboarding");
-      }
-    });
-  }, [router]);
 
   const pendingPosts = posts.filter((p) => p.status === "awaiting_approval");
   const otherPosts = posts.filter((p) => p.status !== "awaiting_approval");
