@@ -5,6 +5,7 @@ import { Camera, LogOut, History } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useContentRequests } from "@/hooks/useContentRequests";
 import { PostCard } from "@/components/dashboard/PostCard";
+import { PhotoUploadFAB } from "@/components/dashboard/PhotoUploadFAB";
 
 export default function DashboardPage() {
   const { user, logout } = useAuth();
@@ -106,16 +107,7 @@ export default function DashboardPage() {
         )}
       </main>
 
-      {/* FAB — Nova Foto (placeholder v1.1) */}
-      <div className="fixed bottom-6 right-6">
-        <button
-          className="h-14 w-14 rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 active:scale-95 transition-all flex items-center justify-center"
-          title="Nova Foto (em breve)"
-          onClick={() => alert("Upload de foto estará disponível em breve!")}
-        >
-          <Camera className="h-6 w-6" />
-        </button>
-      </div>
+      <PhotoUploadFAB onUploadComplete={refresh} />
     </div>
   );
 }
