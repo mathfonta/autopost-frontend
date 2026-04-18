@@ -38,7 +38,7 @@ export function StepConnectInstagram({
             <CheckCircle className="w-8 h-8 text-green-500" />
           </div>
           <p className="text-center">
-            <span className="font-semibold text-gray-900">Share2 conectado!</span>
+            <span className="font-semibold text-gray-900">Instagram conectado!</span>
             <br />
             <span className="text-gray-500 text-sm">@{connectedUsername}</span>
           </p>
@@ -60,7 +60,7 @@ export function StepConnectInstagram({
           <Share2 className="w-8 h-8 text-white" />
         </div>
         <p className="text-center text-sm text-gray-600 leading-relaxed">
-          Conecte sua conta do Share2 para que o AutoPost possa publicar os posts automaticamente após aprovação.
+          Conecte sua conta do Instagram para que o AutoPost possa publicar os posts automaticamente após aprovação.
         </p>
       </div>
 
@@ -76,7 +76,7 @@ export function StepConnectInstagram({
         ) : (
           <Share2 className="w-4 h-4" />
         )}
-        {loading ? "Redirecionando..." : "Conectar com Share2"}
+        {loading ? "Redirecionando..." : "Conectar com Instagram"}
       </button>
 
       <button
