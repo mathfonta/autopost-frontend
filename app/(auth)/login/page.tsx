@@ -91,12 +91,19 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <p className="text-center text-sm text-gray-500 mt-4">
-            Não tem conta?{" "}
-            <Link href="/register" className="text-blue-600 font-medium hover:underline">
-              Criar conta
-            </Link>
-          </p>
+          <div className="mt-4 flex flex-col gap-2 text-center text-sm text-gray-500">
+            <p>
+              Não tem conta?{" "}
+              <Link href="/register" className="text-blue-600 font-medium hover:underline">
+                Criar conta
+              </Link>
+            </p>
+            <p>
+              <Link href="/forgot-password" className="text-blue-600 font-medium hover:underline">
+                Esqueci minha senha
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>
