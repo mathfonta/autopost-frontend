@@ -1,5 +1,6 @@
 import axios from "axios";
 import Cookies from "js-cookie";
+import type { ContentRequestListResponse } from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -15,6 +16,21 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+export async function getContentRequests(page = 1): Promise<ContentRequestListResponse> {
+  const { data } = await api.get<ContentRequestListResponse>("/content-requests", {
+    params: { page, page_size: 20 },
+  });
+  return data;
+}
+
+export async function approveContentRequest(id: string): Promise<void> {
+  await api.post(`/content-requests/${id}/approve`);
+}
+
+export async function rejectContentRequest(id: string, reason?: string): Promise<void> {
+  await api.post(`/content-requests/${id}/reject`, { reason: reason || null });
+}
 
 api.interceptors.response.use(
   (response) => response,

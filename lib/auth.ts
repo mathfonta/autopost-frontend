@@ -28,12 +28,9 @@ export interface RegisterPayload {
 }
 
 export async function login(payload: LoginPayload): Promise<User> {
-  const params = new URLSearchParams();
-  params.append("username", payload.email);
-  params.append("password", payload.password);
-
-  const { data } = await api.post("/auth/login", params, {
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+  const { data } = await api.post("/auth/login", {
+    email: payload.email,
+    password: payload.password,
   });
 
   Cookies.set(COOKIE_NAME, data.access_token, COOKIE_OPTIONS);
