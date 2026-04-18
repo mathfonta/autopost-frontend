@@ -1,6 +1,6 @@
 import axios from "axios";
 import Cookies from "js-cookie";
-import type { ContentRequestListResponse } from "./types";
+import type { ContentRequest, ContentRequestListResponse } from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -21,6 +21,11 @@ export async function getContentRequests(page = 1): Promise<ContentRequestListRe
   const { data } = await api.get<ContentRequestListResponse>("/content-requests", {
     params: { page, page_size: 20 },
   });
+  return data;
+}
+
+export async function getContentRequest(id: string): Promise<ContentRequest> {
+  const { data } = await api.get<ContentRequest>(`/content-requests/${id}`);
   return data;
 }
 

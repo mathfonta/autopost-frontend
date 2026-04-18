@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { ExternalLink, ImageOff } from "lucide-react";
 import { StatusBadge } from "./StatusBadge";
 import { ApprovalButtons } from "./ApprovalButtons";
@@ -20,6 +21,7 @@ function getPermalink(post: ContentRequest): string | null {
 }
 
 export function PostCard({ post, onAction }: PostCardProps) {
+  const router = useRouter();
   const [imgError, setImgError] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
@@ -31,8 +33,12 @@ export function PostCard({ post, onAction }: PostCardProps) {
 
   return (
     <div className={`rounded-2xl bg-white shadow-sm overflow-hidden border ${isAwaitingApproval ? "border-yellow-300 ring-2 ring-yellow-200" : "border-gray-100"}`}>
-      {/* Imagem */}
-      <div className="relative aspect-square bg-gray-100">
+      {/* Imagem — clicável para abrir preview */}
+      <div
+        className="relative aspect-square bg-gray-100 cursor-pointer"
+        onClick={() => router.push(`/posts/${post.id}`)}
+        title="Ver preview completo"
+      >
         {!imgError ? (
           <img
             src={imageUrl}
