@@ -1,13 +1,26 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Camera, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useContentRequests } from "@/hooks/useContentRequests";
 import { PostCard } from "@/components/dashboard/PostCard";
+import { getOnboardingStatus } from "@/lib/api";
 
 export default function DashboardPage() {
   const { user, logout } = useAuth();
+  const router = useRouter();
   const { posts, error, loading, refresh } = useContentRequests();
+
+  // Redireciona para onboarding se não concluído
+  useEffect(() => {
+    getOnboardingStatus().then((status) => {
+      if (status.status !== "done") {
+        router.replace("/onboarding");
+      }
+    }).catch(() => {}); // silencioso — falha não bloqueia dashboard
+  }, [router]);
 
   const pendingPosts = posts.filter((p) => p.status === "awaiting_approval");
   const otherPosts = posts.filter((p) => p.status !== "awaiting_approval");

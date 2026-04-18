@@ -37,6 +37,52 @@ export async function rejectContentRequest(id: string, reason?: string): Promise
   await api.post(`/content-requests/${id}/reject`, { reason: reason || null });
 }
 
+// ─── Onboarding ─────────────────────────────────────────────────
+
+export interface OnboardingStatus {
+  status: "not_started" | "in_progress" | "done";
+  brand_profile?: Record<string, unknown>;
+}
+
+export interface OnboardingReply {
+  reply: string;
+  done: boolean;
+}
+
+export async function getOnboardingStatus(): Promise<OnboardingStatus> {
+  const { data } = await api.get<OnboardingStatus>("/onboarding/status");
+  return data;
+}
+
+export async function startOnboarding(): Promise<OnboardingReply> {
+  const { data } = await api.post<OnboardingReply>("/onboarding/start");
+  return data;
+}
+
+export async function sendOnboardingMessage(message: string): Promise<OnboardingReply> {
+  const { data } = await api.post<OnboardingReply>("/onboarding/message", { message });
+  return data;
+}
+
+// ─── Meta / Instagram ───────────────────────────────────────────
+
+export interface MetaStatus {
+  connected: boolean;
+  instagram_username: string | null;
+  facebook_page_name: string | null;
+  token_expires_at: string | null;
+}
+
+export async function getMetaConnectUrl(): Promise<string> {
+  const { data } = await api.get<{ auth_url: string }>("/meta/connect");
+  return data.auth_url;
+}
+
+export async function getMetaStatus(): Promise<MetaStatus> {
+  const { data } = await api.get<MetaStatus>("/meta/status");
+  return data;
+}
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {
