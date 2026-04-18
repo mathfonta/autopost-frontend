@@ -1,10 +1,35 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { PartyPopper, Camera, CheckCircle } from "lucide-react";
+import { PartyPopper, Camera, CheckCircle, Bell } from "lucide-react";
+import { subscribeToPush } from "@/lib/push";
 
 export function StepComplete() {
   const router = useRouter();
+  const [pushState, setPushState] = useState<"idle" | "asking" | "granted" | "denied">("idle");
+
+  useEffect(() => {
+    const requestPush = async () => {
+      if (!("Notification" in window)) return;
+      if (Notification.permission === "granted") {
+        setPushState("granted");
+        await subscribeToPush();
+        return;
+      }
+      if (Notification.permission === "denied") {
+        setPushState("denied");
+        return;
+      }
+      // Solicitar permissão após onboarding concluído (AC6)
+      setPushState("asking");
+      const granted = await subscribeToPush();
+      setPushState(granted ? "granted" : "denied");
+    };
+
+    const timer = setTimeout(requestPush, 1000);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className="space-y-6 text-center">
@@ -17,6 +42,15 @@ export function StepComplete() {
           Sua conta está configurada. Agora é só enviar fotos e aprovar os posts.
         </p>
       </div>
+
+      {pushState === "granted" && (
+        <div className="flex items-center gap-2 bg-green-50 border border-green-100 rounded-xl px-4 py-3 text-left">
+          <Bell className="w-4 h-4 text-green-600 flex-shrink-0" />
+          <p className="text-xs text-green-700">
+            Notificações ativas — você será avisado quando um post precisar de aprovação.
+          </p>
+        </div>
+      )}
 
       <div className="bg-gray-50 rounded-2xl p-4 text-left space-y-3">
         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
