@@ -37,6 +37,16 @@ export async function rejectContentRequest(id: string, reason?: string): Promise
   await api.post(`/content-requests/${id}/reject`, { reason: reason || null });
 }
 
+export async function patchContentRequest(id: string, caption: string): Promise<ContentRequest> {
+  const { data } = await api.patch<ContentRequest>(`/content-requests/${id}`, { caption });
+  return data;
+}
+
+export async function retryContentRequest(id: string): Promise<{ id: string; status: string; retry_count: number }> {
+  const { data } = await api.post(`/content-requests/${id}/retry`);
+  return data;
+}
+
 // ─── Onboarding ─────────────────────────────────────────────────
 
 export interface OnboardingStatus {

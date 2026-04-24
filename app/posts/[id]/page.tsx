@@ -93,7 +93,7 @@ export default function PostPreviewPage() {
                 <p className="text-sm text-gray-500 mb-3 text-center">
                   Como ficou? Aprove para publicar ou rejeite para refazer.
                 </p>
-                <ApprovalButtons postId={post.id} onAction={fetchPost} />
+                <ApprovalButtons postId={post.id} retryCount={post.retry_count} onAction={fetchPost} />
               </div>
             )}
 

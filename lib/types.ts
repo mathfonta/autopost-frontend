@@ -42,6 +42,9 @@ export interface ContentRequest {
   copy_result: CopyResult | null;
   design_result: DesignResult | null;
   publish_result: PublishResult | null;
+  caption_edited: boolean;
+  retry_count: number;
+  content_type: string | null;
   created_at: string;
   updated_at: string;
 }

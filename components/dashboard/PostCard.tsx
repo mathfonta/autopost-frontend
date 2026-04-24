@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { ExternalLink, ImageOff } from "lucide-react";
 import { StatusBadge } from "./StatusBadge";
 import { ApprovalButtons } from "./ApprovalButtons";
+import { CaptionEditor } from "./CaptionEditor";
+import { INTENT_LABELS } from "./IntentMenu";
 import type { ContentRequest } from "@/lib/types";
 
 interface PostCardProps {
@@ -23,13 +25,18 @@ function getPermalink(post: ContentRequest): string | null {
 export function PostCard({ post, onAction }: PostCardProps) {
   const router = useRouter();
   const [imgError, setImgError] = useState(false);
-  const [expanded, setExpanded] = useState(false);
+  const [editedCaption, setEditedCaption] = useState<string | null>(null);
+  const [captionEdited, setCaptionEdited] = useState(post.caption_edited);
 
-  const caption = getCaption(post);
+  const caption = editedCaption ?? getCaption(post);
   const permalink = getPermalink(post);
   const isAwaitingApproval = post.status === "awaiting_approval";
   const imageUrl = post.design_result?.processed_photo_url ?? post.photo_url;
-  const isLong = caption.length > 120;
+
+  const handleCaptionSave = (newCaption: string) => {
+    setEditedCaption(newCaption);
+    setCaptionEdited(true);
+  };
 
   return (
     <div className={`rounded-2xl bg-white shadow-sm overflow-hidden border ${isAwaitingApproval ? "border-yellow-300 ring-2 ring-yellow-200" : "border-gray-100"}`}>
@@ -59,19 +66,25 @@ export function PostCard({ post, onAction }: PostCardProps) {
 
       {/* Conteúdo */}
       <div className="p-3">
+        {/* Badge de tipo de conteúdo */}
+        {post.content_type && INTENT_LABELS[post.content_type] && (
+          <p className="text-xs text-blue-500 font-medium mb-1">
+            {INTENT_LABELS[post.content_type]}
+          </p>
+        )}
+
         {/* Legenda */}
         {caption ? (
           <div className="mb-2">
-            <p className={`text-sm text-gray-700 ${!expanded && isLong ? "line-clamp-3" : ""}`}>
-              {caption}
-            </p>
-            {isLong && (
-              <button
-                onClick={() => setExpanded(!expanded)}
-                className="text-xs text-blue-500 hover:text-blue-700 mt-1 font-medium"
-              >
-                {expanded ? "Ver menos" : "Ver mais"}
-              </button>
+            {isAwaitingApproval ? (
+              <CaptionEditor
+                postId={post.id}
+                caption={caption}
+                captionEdited={captionEdited}
+                onSave={handleCaptionSave}
+              />
+            ) : (
+              <p className="text-sm text-gray-700">{caption}</p>
             )}
           </div>
         ) : (
@@ -95,7 +108,12 @@ export function PostCard({ post, onAction }: PostCardProps) {
 
         {/* Botões de aprovação */}
         {isAwaitingApproval && (
-          <ApprovalButtons postId={post.id} onAction={onAction} />
+          <ApprovalButtons
+            postId={post.id}
+            retryCount={post.retry_count}
+            captionOverride={editedCaption}
+            onAction={onAction}
+          />
         )}
       </div>
     </div>

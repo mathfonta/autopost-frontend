@@ -1,8 +1,9 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Camera, Upload, X } from "lucide-react";
+import { Camera, X } from "lucide-react";
 import { api } from "@/lib/api";
+import { IntentMenu } from "./IntentMenu";
 
 interface PhotoUploadFABProps {
   onUploadComplete: () => void;
@@ -12,19 +13,22 @@ export function PhotoUploadFAB({ onUploadComplete }: PhotoUploadFABProps) {
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
-  const [showMenu, setShowMenu] = useState(false);
+  const [showIntentMenu, setShowIntentMenu] = useState(false);
+  const [showSourceMenu, setShowSourceMenu] = useState(false);
+  const [selectedIntent, setSelectedIntent] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const isMobile =
     typeof navigator !== "undefined" && navigator.maxTouchPoints > 0;
 
-  const handleFileSelected = async (file: File) => {
-    setShowMenu(false);
+  const handleFileSelected = async (file: File, intent: string | null) => {
+    setShowSourceMenu(false);
     setError(null);
     setUploading(true);
     try {
       const formData = new FormData();
       formData.append("photo", file);
+      if (intent) formData.append("content_type", intent);
       await api.post("/content-requests", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
@@ -33,15 +37,27 @@ export function PhotoUploadFAB({ onUploadComplete }: PhotoUploadFABProps) {
       setError("Erro ao enviar foto. Tente novamente.");
     } finally {
       setUploading(false);
+      setSelectedIntent(null);
+    }
+  };
+
+  const handleIntentSelected = (contentType: string) => {
+    setSelectedIntent(contentType);
+    setShowIntentMenu(false);
+    if (isMobile) {
+      setShowSourceMenu(true);
+    } else {
+      setTimeout(() => galleryInputRef.current?.click(), 50);
     }
   };
 
   const handleFABClick = () => {
-    if (isMobile) {
-      setShowMenu(true);
-    } else {
-      galleryInputRef.current?.click();
-    }
+    setShowIntentMenu(true);
+  };
+
+  const captureWithIntent = (ref: React.RefObject<HTMLInputElement | null>) => {
+    setShowSourceMenu(false);
+    setTimeout(() => ref.current?.click(), 50);
   };
 
   return (
@@ -55,12 +71,12 @@ export function PhotoUploadFAB({ onUploadComplete }: PhotoUploadFABProps) {
         className="hidden"
         onChange={(e) => {
           const file = e.target.files?.[0];
-          if (file) handleFileSelected(file);
+          if (file) handleFileSelected(file, selectedIntent);
           e.target.value = "";
         }}
       />
 
-      {/* Input galeria / file picker (desktop + mobile) */}
+      {/* Input galeria / file picker */}
       <input
         ref={galleryInputRef}
         type="file"
@@ -68,7 +84,7 @@ export function PhotoUploadFAB({ onUploadComplete }: PhotoUploadFABProps) {
         className="hidden"
         onChange={(e) => {
           const file = e.target.files?.[0];
-          if (file) handleFileSelected(file);
+          if (file) handleFileSelected(file, selectedIntent);
           e.target.value = "";
         }}
       />
@@ -83,22 +99,27 @@ export function PhotoUploadFAB({ onUploadComplete }: PhotoUploadFABProps) {
         </div>
       )}
 
-      {/* Bottom sheet (mobile) */}
-      {showMenu && (
+      {/* Etapa 1: Menu de Intenção */}
+      {showIntentMenu && (
+        <IntentMenu
+          onSelect={handleIntentSelected}
+          onClose={() => setShowIntentMenu(false)}
+        />
+      )}
+
+      {/* Etapa 2: Menu câmera vs galeria (mobile) */}
+      {showSourceMenu && (
         <div className="fixed inset-0 z-50 flex items-end">
           <div
             className="absolute inset-0 bg-black/30"
-            onClick={() => setShowMenu(false)}
+            onClick={() => setShowSourceMenu(false)}
           />
           <div className="relative w-full bg-white rounded-t-2xl px-6 pt-6 pb-10 space-y-3">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide text-center mb-2">
               Enviar foto
             </p>
             <button
-              onClick={() => {
-                setShowMenu(false);
-                setTimeout(() => cameraInputRef.current?.click(), 50);
-              }}
+              onClick={() => captureWithIntent(cameraInputRef)}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-gray-50 hover:bg-gray-100 active:bg-gray-200 transition-colors"
             >
               <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center">
@@ -110,14 +131,11 @@ export function PhotoUploadFAB({ onUploadComplete }: PhotoUploadFABProps) {
               </div>
             </button>
             <button
-              onClick={() => {
-                setShowMenu(false);
-                setTimeout(() => galleryInputRef.current?.click(), 50);
-              }}
+              onClick={() => captureWithIntent(galleryInputRef)}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-gray-50 hover:bg-gray-100 active:bg-gray-200 transition-colors"
             >
               <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center">
-                <Upload className="h-5 w-5 text-blue-600" />
+                <Camera className="h-5 w-5 text-blue-600" />
               </div>
               <div className="text-left">
                 <p className="text-sm font-semibold text-gray-800">Escolher da galeria</p>
