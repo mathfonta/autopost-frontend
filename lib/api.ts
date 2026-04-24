@@ -81,6 +81,13 @@ export interface MetaStatus {
   instagram_username: string | null;
   facebook_page_name: string | null;
   token_expires_at: string | null;
+  days_until_expiry: number | null;
+  token_expiring_soon: boolean;
+}
+
+export async function refreshMetaToken(): Promise<{ renewed: boolean; token_expires_at: string; days_until_expiry: number }> {
+  const { data } = await api.post("/meta/refresh");
+  return data;
 }
 
 export async function getMetaConnectUrl(): Promise<string> {

@@ -1,16 +1,24 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Camera, LogOut, History } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useContentRequests } from "@/hooks/useContentRequests";
 import { PostCard } from "@/components/dashboard/PostCard";
 import { PhotoUploadFAB } from "@/components/dashboard/PhotoUploadFAB";
+import { MetaTokenWarning } from "@/components/dashboard/MetaTokenWarning";
+import { getMetaStatus, type MetaStatus } from "@/lib/api";
 
 export default function DashboardPage() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const { posts, error, loading, refresh } = useContentRequests();
+  const [metaStatus, setMetaStatus] = useState<MetaStatus | null>(null);
+
+  useEffect(() => {
+    getMetaStatus().then(setMetaStatus).catch(() => null);
+  }, []);
 
   const pendingPosts = posts.filter((p) => p.status === "awaiting_approval");
   const otherPosts = posts.filter((p) => p.status !== "awaiting_approval");
@@ -47,6 +55,14 @@ export default function DashboardPage() {
 
       {/* Conteúdo */}
       <main className="max-w-2xl mx-auto px-4 py-6 pb-24">
+        {/* Aviso de token Meta expirando */}
+        {metaStatus && (
+          <MetaTokenWarning
+            status={metaStatus}
+            onRenewed={() => getMetaStatus().then(setMetaStatus).catch(() => null)}
+          />
+        )}
+
         {/* Erro */}
         {error && (
           <div className="mb-4 rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-700">
