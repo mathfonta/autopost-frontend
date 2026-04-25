@@ -93,10 +93,11 @@ export function CaptionEditor({ postId, caption, captionEdited, onSave }: Captio
         )}
         <button
           onClick={handleEdit}
-          className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-gray-600"
+          className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-blue-600 transition-colors"
           title="Editar legenda"
         >
-          <Pencil className="h-3.5 w-3.5" />
+          <Pencil className="h-3 w-3" />
+          Editar
         </button>
       </div>
     </div>
