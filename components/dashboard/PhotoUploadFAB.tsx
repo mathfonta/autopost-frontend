@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { Camera, X } from "lucide-react";
 import { api } from "@/lib/api";
 import { IntentMenu } from "./IntentMenu";
+import { ContextModal } from "./ContextModal";
 
 interface PhotoUploadFABProps {
   onUploadComplete: () => void;
@@ -15,20 +16,23 @@ export function PhotoUploadFAB({ onUploadComplete }: PhotoUploadFABProps) {
   const [uploading, setUploading] = useState(false);
   const [showIntentMenu, setShowIntentMenu] = useState(false);
   const [showSourceMenu, setShowSourceMenu] = useState(false);
+  const [showContextModal, setShowContextModal] = useState(false);
   const [selectedIntent, setSelectedIntent] = useState<string | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
 
   const isMobile =
     typeof navigator !== "undefined" && navigator.maxTouchPoints > 0;
 
-  const handleFileSelected = async (file: File, intent: string | null) => {
-    setShowSourceMenu(false);
+  const uploadFile = async (file: File, intent: string | null, context: string | null) => {
     setError(null);
     setUploading(true);
     try {
       const formData = new FormData();
       formData.append("photo", file);
       if (intent) formData.append("content_type", intent);
+      if (context && context.trim()) formData.append("user_context", context.trim());
       await api.post("/content-requests", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
@@ -38,7 +42,45 @@ export function PhotoUploadFAB({ onUploadComplete }: PhotoUploadFABProps) {
     } finally {
       setUploading(false);
       setSelectedIntent(null);
+      setPendingFile(null);
+      if (photoPreviewUrl) {
+        URL.revokeObjectURL(photoPreviewUrl);
+        setPhotoPreviewUrl("");
+      }
     }
+  };
+
+  const handleFileSelected = (file: File, intent: string | null) => {
+    setShowSourceMenu(false);
+    const previewUrl = URL.createObjectURL(file);
+    setPendingFile(file);
+    setPhotoPreviewUrl(previewUrl);
+    setShowContextModal(true);
+    // intent já está em selectedIntent via handleIntentSelected
+  };
+
+  const handleContextConfirm = (context: string) => {
+    setShowContextModal(false);
+    if (pendingFile) {
+      uploadFile(pendingFile, selectedIntent, context || null);
+    }
+  };
+
+  const handleContextSkip = () => {
+    setShowContextModal(false);
+    if (pendingFile) {
+      uploadFile(pendingFile, selectedIntent, null);
+    }
+  };
+
+  const handleContextClose = () => {
+    setShowContextModal(false);
+    setPendingFile(null);
+    if (photoPreviewUrl) {
+      URL.revokeObjectURL(photoPreviewUrl);
+      setPhotoPreviewUrl("");
+    }
+    setSelectedIntent(null);
   };
 
   const handleIntentSelected = (contentType: string) => {
@@ -93,7 +135,7 @@ export function PhotoUploadFAB({ onUploadComplete }: PhotoUploadFABProps) {
       {error && (
         <div className="fixed bottom-24 right-4 left-4 z-50 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 flex items-center justify-between gap-3">
           <span>{error}</span>
-          <button onClick={() => setError(null)} className="flex-shrink-0">
+          <button onClick={() => setError(null)} className="shrink-0">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -144,6 +186,16 @@ export function PhotoUploadFAB({ onUploadComplete }: PhotoUploadFABProps) {
             </button>
           </div>
         </div>
+      )}
+
+      {/* Etapa 3: Modal de contexto */}
+      {showContextModal && photoPreviewUrl && (
+        <ContextModal
+          photoPreviewUrl={photoPreviewUrl}
+          onConfirm={handleContextConfirm}
+          onSkip={handleContextSkip}
+          onClose={handleContextClose}
+        />
       )}
 
       {/* FAB */}
