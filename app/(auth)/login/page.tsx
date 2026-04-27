@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { login } from "@/lib/auth";
+import { getMetaStatus } from "@/lib/api";
 
 const schema = z.object({
   email: z.string().email("E-mail inválido"),
@@ -32,7 +33,8 @@ export default function LoginPage() {
     setServerError(null);
     try {
       await login({ email: data.email, password: data.password });
-      router.push("/dashboard");
+      const metaStatus = await getMetaStatus().catch(() => null);
+      router.push(metaStatus?.connected ? "/dashboard" : "/onboarding");
     } catch {
       setServerError("E-mail ou senha incorretos.");
     }
