@@ -1,4 +1,4 @@
-import { Clock, Eye, PenLine, Image, ThumbsUp, Send, CheckCircle, XCircle } from "lucide-react";
+import { Clock, Eye, PenLine, Image, ThumbsUp, Send, CheckCircle, XCircle, ThumbsDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ContentStatus } from "@/lib/types";
 
@@ -15,6 +15,7 @@ const STATUS_CONFIG: Record<
   publishing:        { label: "Publicando...",          color: "bg-blue-100 text-blue-700",    icon: Send },
   published:         { label: "Publicado ✓",            color: "bg-green-100 text-green-700",  icon: CheckCircle },
   failed:            { label: "Falhou",                color: "bg-red-100 text-red-700",      icon: XCircle },
+  rejected:          { label: "Rejeitado",             color: "bg-orange-100 text-orange-700", icon: ThumbsDown },
 };
 
 interface StatusBadgeProps {

@@ -7,7 +7,8 @@ export type ContentStatus =
   | "approved"
   | "publishing"
   | "published"
-  | "failed";
+  | "failed"
+  | "rejected";
 
 export interface DesignResult {
   processed_photo_url: string;

@@ -5,11 +5,14 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { InstagramPostPreview } from "@/components/dashboard/InstagramPostPreview";
 import { ApprovalButtons } from "@/components/dashboard/ApprovalButtons";
+import { CaptionEditor } from "@/components/dashboard/CaptionEditor";
 import { PostMetrics } from "@/components/dashboard/PostMetrics";
 import { SkeletonPostCard } from "@/components/dashboard/SkeletonPostCard";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
 import { getContentRequest } from "@/lib/api";
 import type { ContentRequest } from "@/lib/types";
+
+const TERMINAL_STATUSES = ["published", "failed", "rejected"] as const;
 
 export default function PostPreviewPage() {
   const params = useParams();
@@ -19,11 +22,14 @@ export default function PostPreviewPage() {
   const [post, setPost] = useState<ContentRequest | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [editedCaption, setEditedCaption] = useState<string | null>(null);
+  const [captionEdited, setCaptionEdited] = useState(false);
 
   const fetchPost = async () => {
     try {
       const data = await getContentRequest(id);
       setPost(data);
+      setCaptionEdited(data.caption_edited);
       setError(null);
     } catch {
       setError("Não foi possível carregar o post.");
@@ -34,9 +40,9 @@ export default function PostPreviewPage() {
 
   useEffect(() => {
     fetchPost();
-    // Polling só se post ainda não foi publicado/falhou
+    const TERMINAL = ["published", "failed", "rejected"];
     const interval = setInterval(async () => {
-      if (post && (post.status === "published" || post.status === "failed")) return;
+      if (post && TERMINAL.includes(post.status)) return;
       try {
         const data = await getContentRequest(id);
         setPost(data);
@@ -48,6 +54,12 @@ export default function PostPreviewPage() {
 
   const permalink = post?.publish_result?.permalink ?? null;
   const isAwaitingApproval = post?.status === "awaiting_approval";
+  const caption = editedCaption ?? post?.copy_result?.caption ?? "";
+
+  const handleCaptionSave = (newCaption: string) => {
+    setEditedCaption(newCaption);
+    setCaptionEdited(true);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -86,6 +98,37 @@ export default function PostPreviewPage() {
         {post && (
           <>
             <InstagramPostPreview post={post} />
+
+            {/* Legenda editável (só em awaiting_approval) */}
+            {isAwaitingApproval && caption && (
+              <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+                <p className="text-sm font-medium text-gray-600 mb-2">Legenda gerada</p>
+                <CaptionEditor
+                  postId={post.id}
+                  caption={caption}
+                  captionEdited={captionEdited}
+                  onSave={handleCaptionSave}
+                />
+              </div>
+            )}
+
+            {/* Mensagem de erro técnico */}
+            {post.status === "failed" && post.error_message && (
+              <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
+                <p className="text-sm font-semibold text-red-700 mb-1">Motivo da falha</p>
+                <p className="text-sm text-red-600">{post.error_message}</p>
+              </div>
+            )}
+
+            {/* Motivo de rejeição */}
+            {post.status === "rejected" && (
+              <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4">
+                <p className="text-sm font-semibold text-orange-700 mb-1">Post rejeitado</p>
+                <p className="text-sm text-orange-600">
+                  {post.error_message ?? "Nenhum motivo informado."}
+                </p>
+              </div>
+            )}
 
             {/* Botões de aprovação */}
             {isAwaitingApproval && (

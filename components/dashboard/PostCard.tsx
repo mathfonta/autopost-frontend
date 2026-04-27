@@ -88,9 +88,21 @@ export function PostCard({ post, onAction }: PostCardProps) {
             )}
           </div>
         ) : (
-          post.status !== "published" && (
+          post.status !== "published" && post.status !== "failed" && post.status !== "rejected" && (
             <p className="text-xs text-gray-400 italic mb-2">Gerando conteúdo...</p>
           )
+        )}
+
+        {/* Erro técnico (sem legenda) */}
+        {post.status === "failed" && post.error_message && (
+          <p className="text-xs text-red-400 italic mb-2">{post.error_message}</p>
+        )}
+
+        {/* Motivo de rejeição */}
+        {post.status === "rejected" && (
+          <p className="text-xs text-orange-500 italic mb-2">
+            {post.error_message ? `Motivo: ${post.error_message}` : "Rejeitado"}
+          </p>
         )}
 
         {/* Link Instagram */}
