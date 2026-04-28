@@ -100,6 +100,12 @@ export async function getMetaStatus(): Promise<MetaStatus> {
   return data;
 }
 
+// ─── Perfil ──────────────────────────────────────────────────────
+
+export async function updateProfile(voice_tone: string): Promise<void> {
+  await api.patch("/auth/profile", { voice_tone });
+}
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {

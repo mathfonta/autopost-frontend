@@ -13,6 +13,7 @@ export interface User {
   email: string;
   name?: string;
   company_name?: string;
+  voice_tone?: "formal" | "casual" | "technical" | null;
 }
 
 export interface LoginPayload {

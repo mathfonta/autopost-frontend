@@ -8,10 +8,11 @@ import { useContentRequests } from "@/hooks/useContentRequests";
 import { PostCard } from "@/components/dashboard/PostCard";
 import { PhotoUploadFAB } from "@/components/dashboard/PhotoUploadFAB";
 import { MetaTokenWarning } from "@/components/dashboard/MetaTokenWarning";
+import { VoiceToneSelector } from "@/components/dashboard/VoiceToneSelector";
 import { getMetaStatus, type MetaStatus } from "@/lib/api";
 
 export default function DashboardPage() {
-  const { user, logout } = useAuth();
+  const { user, logout, refresh: refreshUser } = useAuth();
   const router = useRouter();
   const { posts, error, loading, refresh } = useContentRequests();
   const [metaStatus, setMetaStatus] = useState<MetaStatus | null>(null);
@@ -55,6 +56,12 @@ export default function DashboardPage() {
 
       {/* Conteúdo */}
       <main className="max-w-2xl mx-auto px-4 py-6 pb-24">
+        {/* Tom de voz */}
+        <VoiceToneSelector
+          currentTone={user?.voice_tone}
+          onChanged={() => refreshUser()}
+        />
+
         {/* Aviso de token Meta expirando */}
         {metaStatus && (
           <MetaTokenWarning
