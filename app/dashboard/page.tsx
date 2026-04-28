@@ -6,9 +6,8 @@ import { Camera, LogOut, History } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useContentRequests } from "@/hooks/useContentRequests";
 import { PostCard } from "@/components/dashboard/PostCard";
-import { PhotoUploadFAB } from "@/components/dashboard/PhotoUploadFAB";
+import { ContentTypeBar } from "@/components/dashboard/ContentTypeBar";
 import { MetaTokenWarning } from "@/components/dashboard/MetaTokenWarning";
-import { VoiceToneSelector } from "@/components/dashboard/VoiceToneSelector";
 import { getMetaStatus, type MetaStatus } from "@/lib/api";
 
 export default function DashboardPage() {
@@ -55,11 +54,12 @@ export default function DashboardPage() {
       </header>
 
       {/* Conteúdo */}
-      <main className="max-w-2xl mx-auto px-4 py-6 pb-24">
-        {/* Tom de voz */}
-        <VoiceToneSelector
+      <main className="max-w-2xl mx-auto px-4 py-6">
+        {/* Seletor de tipo de conteúdo (substitui FAB + tom de voz no topo) */}
+        <ContentTypeBar
+          onUploadComplete={refresh}
           currentTone={user?.voice_tone}
-          onChanged={() => refreshUser()}
+          onToneChanged={refreshUser}
         />
 
         {/* Aviso de token Meta expirando */}
@@ -79,7 +79,7 @@ export default function DashboardPage() {
 
         {/* Loading inicial */}
         {loading && posts.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+          <div className="flex flex-col items-center justify-center py-16 text-gray-400">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-blue-500 mb-3" />
             <p className="text-sm">Carregando posts...</p>
           </div>
@@ -87,13 +87,13 @@ export default function DashboardPage() {
 
         {/* Empty state */}
         {!loading && posts.length === 0 && !error && (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="flex flex-col items-center justify-center py-16 text-center">
             <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
               <Camera className="h-8 w-8 text-gray-400" />
             </div>
             <h2 className="text-base font-semibold text-gray-700 mb-1">Nenhum post ainda</h2>
             <p className="text-sm text-gray-400 max-w-xs">
-              Envie sua primeira foto via API e ela aparecerá aqui para aprovação.
+              Escolha um tipo de conteúdo acima e envie sua primeira foto.
             </p>
           </div>
         )}
@@ -121,7 +121,7 @@ export default function DashboardPage() {
             {pendingPosts.length > 0 && (
               <h2 className="text-sm font-semibold text-gray-700 mb-3">Recentes</h2>
             )}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {otherPosts.map((post) => (
                 <PostCard key={post.id} post={post} onAction={refresh} />
               ))}
@@ -129,8 +129,6 @@ export default function DashboardPage() {
           </section>
         )}
       </main>
-
-      <PhotoUploadFAB onUploadComplete={refresh} />
     </div>
   );
 }

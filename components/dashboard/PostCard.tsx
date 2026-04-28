@@ -65,75 +65,64 @@ export function PostCard({ post, onAction }: PostCardProps) {
         </div>
       </div>
 
-      {/* Conteúdo */}
-      <div className="p-3">
-        {/* Badge de tipo de conteúdo */}
-        {post.content_type && INTENT_LABELS[post.content_type] && (
-          <p className="text-xs text-blue-500 font-medium mb-1">
-            {INTENT_LABELS[post.content_type]}
-          </p>
-        )}
-
-        {/* Legenda */}
-        {caption ? (
-          <div className="mb-2">
-            {isAwaitingApproval && post.caption_long ? (
-              <CaptionVariantSelector
-                post={post}
-                onVariantSelected={(text) => setEditedCaption(text)}
-              />
-            ) : isAwaitingApproval ? (
-              <CaptionEditor
-                postId={post.id}
-                caption={caption}
-                captionEdited={captionEdited}
-                onSave={handleCaptionSave}
-              />
-            ) : (
-              <p className="text-sm text-gray-700">{caption}</p>
-            )}
-          </div>
-        ) : (
-          post.status !== "published" && post.status !== "failed" && post.status !== "rejected" && (
-            <p className="text-xs text-gray-400 italic mb-2">Gerando conteúdo...</p>
-          )
-        )}
-
-        {/* Erro técnico (sem legenda) */}
-        {post.status === "failed" && post.error_message && (
-          <p className="text-xs text-red-400 italic mb-2">{post.error_message}</p>
-        )}
-
-        {/* Motivo de rejeição */}
-        {post.status === "rejected" && (
-          <p className="text-xs text-orange-500 italic mb-2">
-            {post.error_message ? `Motivo: ${post.error_message}` : "Rejeitado"}
-          </p>
-        )}
-
-        {/* Link Instagram */}
-        {post.status === "published" && permalink && (
-          <a
-            href={permalink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 mb-2"
-          >
-            <ExternalLink className="h-3 w-3" />
-            Ver no Instagram
-          </a>
-        )}
-
-        {/* Botões de aprovação */}
-        {isAwaitingApproval && (
+      {/* Conteúdo — completo apenas para aprovação pendente */}
+      {isAwaitingApproval ? (
+        <div className="p-3">
+          {post.content_type && INTENT_LABELS[post.content_type] && (
+            <p className="text-xs text-blue-500 font-medium mb-1">
+              {INTENT_LABELS[post.content_type]}
+            </p>
+          )}
+          {caption && (
+            <div className="mb-2">
+              {post.caption_long ? (
+                <CaptionVariantSelector
+                  post={post}
+                  onVariantSelected={(text) => setEditedCaption(text)}
+                />
+              ) : (
+                <CaptionEditor
+                  postId={post.id}
+                  caption={caption}
+                  captionEdited={captionEdited}
+                  onSave={handleCaptionSave}
+                />
+              )}
+            </div>
+          )}
           <ApprovalButtons
             postId={post.id}
             retryCount={post.retry_count}
             captionOverride={editedCaption}
             onAction={onAction}
           />
-        )}
-      </div>
+        </div>
+      ) : (
+        /* Posts não-pendentes: linha mínima com link ou status */
+        <div className="px-3 py-2 flex items-center gap-2 min-h-[2rem]">
+          {post.status === "published" && permalink ? (
+            <a
+              href={permalink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700"
+            >
+              <ExternalLink className="h-3 w-3" />
+              Ver no Instagram
+            </a>
+          ) : post.status === "failed" ? (
+            <p className="text-xs text-red-400 italic truncate">
+              {post.error_message ?? "Falha no processamento"}
+            </p>
+          ) : post.status === "rejected" ? (
+            <p className="text-xs text-orange-500 italic truncate">
+              {post.error_message ? `Rejeitado: ${post.error_message}` : "Rejeitado"}
+            </p>
+          ) : (
+            <p className="text-xs text-gray-400 italic">Gerando conteúdo…</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -1,3 +1,5 @@
+export type VoiceTone = "formal" | "casual" | "technical";
+
 export type ContentStatus =
   | "pending"
   | "analyzing"

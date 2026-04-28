@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { updateProfile } from "@/lib/api";
-
-type VoiceTone = "formal" | "casual" | "technical";
+import type { VoiceTone } from "@/lib/types";
 
 interface Option {
   value: VoiceTone;

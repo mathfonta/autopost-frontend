@@ -2,9 +2,13 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
+import { VoiceToneSelector } from "./VoiceToneSelector";
+import type { VoiceTone } from "@/lib/types";
 
 interface ContextModalProps {
   photoPreviewUrl: string;
+  currentTone?: VoiceTone | null;
+  onToneChanged?: () => void;
   onConfirm: (context: string) => void;
   onSkip: () => void;
   onClose: () => void;
@@ -12,7 +16,14 @@ interface ContextModalProps {
 
 const MAX_CHARS = 200;
 
-export function ContextModal({ photoPreviewUrl, onConfirm, onSkip, onClose }: ContextModalProps) {
+export function ContextModal({
+  photoPreviewUrl,
+  currentTone,
+  onToneChanged,
+  onConfirm,
+  onSkip,
+  onClose,
+}: ContextModalProps) {
   const [context, setContext] = useState("");
 
   return (
@@ -22,7 +33,7 @@ export function ContextModal({ photoPreviewUrl, onConfirm, onSkip, onClose }: Co
         {/* Header */}
         <div className="flex items-center justify-between">
           <p className="text-sm font-semibold text-gray-700">
-            Adicione contexto <span className="text-gray-400 font-normal">(opcional)</span>
+            Preparar post
           </p>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
             <X className="h-4 w-4" />
@@ -34,19 +45,27 @@ export function ContextModal({ photoPreviewUrl, onConfirm, onSkip, onClose }: Co
           <img
             src={photoPreviewUrl}
             alt="Foto selecionada"
-            className="w-16 h-16 rounded-xl object-cover flex-shrink-0 border border-gray-100"
+            className="w-16 h-16 rounded-xl object-cover shrink-0 border border-gray-100"
           />
           <p className="text-xs text-gray-500 leading-relaxed pt-1">
             Descreva o serviço, material ou produto. A IA usa isso para refinar a copy.
           </p>
         </div>
 
+        {/* Tom de voz (quando disponível) */}
+        {currentTone !== undefined && onToneChanged && (
+          <VoiceToneSelector
+            currentTone={currentTone}
+            onChanged={onToneChanged}
+          />
+        )}
+
         {/* Campo de contexto */}
         <div className="relative">
           <textarea
             value={context}
             onChange={(e) => setContext(e.target.value.slice(0, MAX_CHARS))}
-            placeholder="Ex: revestimento em porcelanato, banheiro social, água quente e fria, pedra miracema..."
+            placeholder="Ex: revestimento em porcelanato, banheiro social, água quente e fria..."
             rows={3}
             className="w-full text-sm rounded-xl border border-gray-200 px-3 py-2.5 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-300"
             autoFocus
