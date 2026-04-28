@@ -2,23 +2,31 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Camera, LogOut, History, Zap } from "lucide-react";
+import { Camera, LogOut, History, Zap, RefreshCw } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useContentRequests } from "@/hooks/useContentRequests";
 import { PostCard } from "@/components/dashboard/PostCard";
 import { ContentTypeBar } from "@/components/dashboard/ContentTypeBar";
+import { StreakBar } from "@/components/dashboard/StreakBar";
 import { UploadScreen } from "@/components/dashboard/UploadScreen";
 import { PhotoPreview } from "@/components/dashboard/PhotoPreview";
 import { ContextModal } from "@/components/dashboard/ContextModal";
 import { MetaTokenWarning } from "@/components/dashboard/MetaTokenWarning";
-import { api } from "@/lib/api";
-import { getMetaStatus, type MetaStatus } from "@/lib/api";
+import { POST_TYPE_MAP } from "@/lib/post-types";
+import { api, getMetaStatus, retryContentRequest, type MetaStatus } from "@/lib/api";
 import type { PostTypeId } from "@/lib/post-types";
-import type { VoiceTone } from "@/lib/types";
+import type { ContentRequest, VoiceTone } from "@/lib/types";
 
 type Screen = "dashboard" | "upload" | "preview";
 
 const ACCENT = "#2354E8";
+
+// Mock streak — substituir quando /api/streak existir
+const STREAK_MOCK = {
+  streak:   3,
+  weekDays: [true, true, true, false, false, false, false],
+  weekGoal: 5,
+};
 
 export default function DashboardPage() {
   const { user, logout, refresh: refreshUser } = useAuth();
@@ -26,13 +34,11 @@ export default function DashboardPage() {
   const { posts, error, loading, refresh } = useContentRequests();
   const [metaStatus, setMetaStatus] = useState<MetaStatus | null>(null);
 
-  // Navegação entre telas
   const [screen,      setScreen]      = useState<Screen>("dashboard");
   const [postTypeId,  setPostTypeId]  = useState<PostTypeId | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [photoUrl,    setPhotoUrl]    = useState<string | null>(null);
 
-  // Modal de contexto + upload
   const [contextOpen,   setContextOpen]   = useState(false);
   const [uploading,     setUploading]     = useState(false);
   const [uploadingType, setUploadingType] = useState<PostTypeId | null>(null);
@@ -77,7 +83,7 @@ export default function DashboardPage() {
     try {
       const formData = new FormData();
       formData.append("photo", file);
-      if (intent)         formData.append("content_type", intent);
+      if (intent)          formData.append("content_type", intent);
       if (context?.trim()) formData.append("user_context", context.trim());
       await api.post("/content-requests", formData, {
         headers: { "Content-Type": "multipart/form-data" },
@@ -114,8 +120,18 @@ export default function DashboardPage() {
     cleanupPhoto();
   }
 
-  const pendingPosts = posts.filter((p) => p.status === "awaiting_approval");
-  const otherPosts   = posts.filter((p) => p.status !== "awaiting_approval");
+  async function handleRetry(post: ContentRequest) {
+    try {
+      await retryContentRequest(post.id);
+      refresh();
+    } catch {
+      // silencioso
+    }
+  }
+
+  const pendingPosts   = posts.filter((p) => p.status === "awaiting_approval");
+  const publishedPosts = posts.filter((p) => p.status === "published");
+  const failedPosts    = posts.filter((p) => p.status === "failed");
 
   // ── Tela Upload ───────────────────────────────────────────────────────────
   if (screen === "upload" && postTypeId) {
@@ -177,7 +193,10 @@ export default function DashboardPage() {
         </header>
 
         {/* Conteúdo */}
-        <main className="flex flex-col gap-4.5 overflow-y-auto px-4 pb-9 pt-4.5">
+        <main className="flex flex-col gap-[18px] overflow-y-auto px-4 pb-9 pt-[18px]">
+
+          {/* Streak semanal */}
+          <StreakBar data={STREAK_MOCK} />
 
           {/* Seletor de tipo de conteúdo */}
           <ContentTypeBar
@@ -194,21 +213,14 @@ export default function DashboardPage() {
             />
           )}
 
-          {/* Erros de upload */}
-          {uploadError && (
+          {/* Erros */}
+          {(uploadError || error) && (
             <div className="rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-700">
-              {uploadError}
+              {uploadError || error}
             </div>
           )}
 
-          {/* Erro de carregamento */}
-          {error && (
-            <div className="rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-700">
-              {error}
-            </div>
-          )}
-
-          {/* Loading */}
+          {/* Loading inicial */}
           {loading && posts.length === 0 && (
             <div className="flex flex-col items-center justify-center py-16 text-(--text-3)">
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-(--border) border-t-blue-500 mb-3" />
@@ -229,12 +241,12 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* Aguardando aprovação */}
+          {/* Aguardando aprovação — PostCard completo com botões */}
           {pendingPosts.length > 0 && (
             <section>
               <div className="flex items-center gap-2 mb-3">
                 <span className="h-2 w-2 rounded-full bg-yellow-400 animate-pulse" />
-                <h2 className="text-sm font-semibold text-(--text-2)">
+                <h2 className="text-[15px] font-bold text-(--text-2)">
                   Aguardando aprovação ({pendingPosts.length})
                 </h2>
               </div>
@@ -246,25 +258,45 @@ export default function DashboardPage() {
             </section>
           )}
 
-          {/* Publicações recentes */}
-          {otherPosts.length > 0 && (
+          {/* Publicações recentes — galeria compacta */}
+          {(publishedPosts.length > 0 || failedPosts.length > 0) && (
             <section>
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-[17px] font-extrabold tracking-tight text-(--text-1)">
                   Publicações recentes
                 </h2>
+                <button
+                  onClick={() => router.push("/history")}
+                  className="tap text-[12px] font-bold"
+                  style={{ color: ACCENT }}
+                >
+                  Ver todas
+                </button>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {otherPosts.map((post) => (
-                  <PostCard key={post.id} post={post} onAction={refresh} />
-                ))}
-              </div>
+
+              {publishedPosts.length > 0 && (
+                <div className="mb-4">
+                  <p className="mb-2 text-[10.5px] font-bold uppercase tracking-[.06em] text-(--text-3)">
+                    ✓ Publicados ({publishedPosts.length})
+                  </p>
+                  <GalleryGrid posts={publishedPosts} onRetry={handleRetry} />
+                </div>
+              )}
+
+              {failedPosts.length > 0 && (
+                <div>
+                  <p className="mb-2 text-[10.5px] font-bold uppercase tracking-[.06em] text-(--text-3)">
+                    ⚠ Falharam ({failedPosts.length})
+                  </p>
+                  <GalleryGrid posts={failedPosts} onRetry={handleRetry} />
+                </div>
+              )}
             </section>
           )}
         </main>
       </div>
 
-      {/* Modal de contexto — fora do fluxo de telas */}
+      {/* Modal de contexto */}
       {postTypeId && photoUrl && (
         <ContextModal
           open={contextOpen}
@@ -278,5 +310,81 @@ export default function DashboardPage() {
         />
       )}
     </>
+  );
+}
+
+/* ── GalleryGrid — grade compacta 3 colunas ── */
+function GalleryGrid({
+  posts,
+  onRetry,
+}: {
+  posts: ContentRequest[];
+  onRetry: (post: ContentRequest) => void;
+}) {
+  return (
+    <div className="grid grid-cols-3 gap-2">
+      {posts.map((post) => {
+        const imageUrl = post.design_result?.processed_photo_url ?? post.photo_url;
+        const pub      = post.status === "published";
+        const pt       = post.content_type ? POST_TYPE_MAP[post.content_type as PostTypeId] : null;
+
+        return (
+          <div
+            key={post.id}
+            className="relative aspect-square overflow-hidden rounded-[12px] bg-(--bg-card) shadow-sm"
+          >
+            {imageUrl ? (
+              <img src={imageUrl} alt="" className="block h-full w-full object-cover" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-[9px] font-semibold text-(--text-4)">
+                Sem foto
+              </div>
+            )}
+
+            {/* Gradiente inferior */}
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60" />
+
+            {/* Badge status */}
+            <div className="absolute right-[6px] top-[6px]">
+              <div
+                className={`flex items-center gap-[3px] rounded-full px-[6px] py-[2px] ${
+                  pub ? "bg-[#16A34A]" : "bg-red-500/90"
+                }`}
+              >
+                {pub && (
+                  <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                )}
+                <span className="text-[8px] font-extrabold text-white">
+                  {pub ? "OK" : "FALHOU"}
+                </span>
+              </div>
+            </div>
+
+            {/* Ação no rodapé */}
+            <div className="absolute bottom-0 left-0 right-0 p-[6px]">
+              {pub ? (
+                <div className="flex w-full items-center justify-center gap-[3px] rounded-[7px] border border-white/30 bg-white/15 py-1 backdrop-blur-sm">
+                  {pt && (
+                    <span className="text-[8px] font-extrabold text-white/80">
+                      {pt.label}
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <button
+                  onClick={() => onRetry(post)}
+                  className="flex w-full items-center justify-center gap-[3px] rounded-[7px] py-1 text-[9px] font-extrabold text-white"
+                  style={{ background: ACCENT }}
+                >
+                  <RefreshCw size={10} /> Tentar novamente
+                </button>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }
