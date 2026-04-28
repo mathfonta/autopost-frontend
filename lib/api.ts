@@ -118,6 +118,12 @@ export async function updateProfile(voice_tone: string): Promise<void> {
   await api.patch("/auth/profile", { voice_tone });
 }
 
+// ─── Content requests ────────────────────────────────────────────
+
+export async function deleteContentRequest(id: string): Promise<void> {
+  await api.delete(`/content-requests/${id}`);
+}
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {

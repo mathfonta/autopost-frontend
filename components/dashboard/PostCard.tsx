@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ExternalLink, ImageOff } from "lucide-react";
+import { ExternalLink, ImageOff, Trash2 } from "lucide-react";
 import { StatusBadge } from "./StatusBadge";
 import { ApprovalButtons } from "./ApprovalButtons";
 import { CaptionEditor } from "./CaptionEditor";
 import { CaptionVariantSelector } from "./CaptionVariantSelector";
 import { INTENT_LABELS } from "./IntentMenu";
+import { deleteContentRequest } from "@/lib/api";
+import { getErrorInfo } from "@/lib/errorMessages";
 import type { ContentRequest } from "@/lib/types";
 
 interface PostCardProps {
@@ -23,6 +25,54 @@ function getPermalink(post: ContentRequest): string | null {
   return post.publish_result?.permalink ?? null;
 }
 
+function DeleteButton({ postId, onDeleted }: { postId: string; onDeleted: () => void }) {
+  const [confirming, setConfirming] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      await deleteContentRequest(postId);
+      onDeleted();
+    } catch {
+      setDeleting(false);
+      setConfirming(false);
+    }
+  };
+
+  if (confirming) {
+    return (
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-gray-500">Excluir?</span>
+        <button
+          onClick={handleDelete}
+          disabled={deleting}
+          className="text-xs font-semibold text-red-600 hover:text-red-700 disabled:opacity-50"
+        >
+          {deleting ? "Excluindo…" : "Sim"}
+        </button>
+        <button
+          onClick={() => setConfirming(false)}
+          className="text-xs text-gray-400 hover:text-gray-600"
+        >
+          Não
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      onClick={() => setConfirming(true)}
+      className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-red-500 transition-colors"
+      title="Excluir post"
+    >
+      <Trash2 className="h-3 w-3" />
+      Excluir
+    </button>
+  );
+}
+
 export function PostCard({ post, onAction }: PostCardProps) {
   const router = useRouter();
   const [imgError, setImgError] = useState(false);
@@ -32,6 +82,8 @@ export function PostCard({ post, onAction }: PostCardProps) {
   const caption = editedCaption ?? getCaption(post);
   const permalink = getPermalink(post);
   const isAwaitingApproval = post.status === "awaiting_approval";
+  const isFailed = post.status === "failed";
+  const isRejected = post.status === "rejected";
   const imageUrl = post.design_result?.processed_photo_url ?? post.photo_url;
 
   const handleCaptionSave = (newCaption: string) => {
@@ -39,9 +91,15 @@ export function PostCard({ post, onAction }: PostCardProps) {
     setCaptionEdited(true);
   };
 
+  const borderClass = isAwaitingApproval
+    ? "border-yellow-300 ring-2 ring-yellow-200"
+    : isFailed
+    ? "border-red-200"
+    : "border-gray-100";
+
   return (
-    <div className={`rounded-2xl bg-white shadow-sm overflow-hidden border ${isAwaitingApproval ? "border-yellow-300 ring-2 ring-yellow-200" : "border-gray-100"}`}>
-      {/* Imagem — clicável para abrir preview */}
+    <div className={`rounded-2xl bg-white shadow-sm overflow-hidden border ${borderClass}`}>
+      {/* Imagem */}
       <div
         className="relative aspect-square bg-gray-100 cursor-pointer"
         onClick={() => router.push(`/posts/${post.id}`)}
@@ -65,7 +123,7 @@ export function PostCard({ post, onAction }: PostCardProps) {
         </div>
       </div>
 
-      {/* Conteúdo — completo apenas para aprovação pendente */}
+      {/* Conteúdo */}
       {isAwaitingApproval ? (
         <div className="p-3">
           {post.content_type && INTENT_LABELS[post.content_type] && (
@@ -97,10 +155,15 @@ export function PostCard({ post, onAction }: PostCardProps) {
             onAction={onAction}
           />
         </div>
-      ) : (
-        /* Posts não-pendentes: linha mínima com link ou status */
-        <div className="px-3 py-2 flex items-center gap-2 min-h-[2rem]">
-          {post.status === "published" && permalink ? (
+      ) : isFailed ? (
+        /* Card de falha: erro amigável + botão excluir */
+        <FailedCard post={post} onDeleted={onAction} />
+      ) : isRejected ? (
+        /* Card rejeitado: motivo + botão excluir */
+        <RejectedCard post={post} onDeleted={onAction} />
+      ) : post.status === "published" ? (
+        <div className="px-3 py-2">
+          {permalink && (
             <a
               href={permalink}
               target="_blank"
@@ -110,19 +173,45 @@ export function PostCard({ post, onAction }: PostCardProps) {
               <ExternalLink className="h-3 w-3" />
               Ver no Instagram
             </a>
-          ) : post.status === "failed" ? (
-            <p className="text-xs text-red-400 italic truncate">
-              {post.error_message ?? "Falha no processamento"}
-            </p>
-          ) : post.status === "rejected" ? (
-            <p className="text-xs text-orange-500 italic truncate">
-              {post.error_message ? `Rejeitado: ${post.error_message}` : "Rejeitado"}
-            </p>
-          ) : (
-            <p className="text-xs text-gray-400 italic">Gerando conteúdo…</p>
           )}
         </div>
+      ) : (
+        <div className="px-3 py-2">
+          <p className="text-xs text-gray-400 italic">Gerando conteúdo…</p>
+        </div>
       )}
+    </div>
+  );
+}
+
+function FailedCard({ post, onDeleted }: { post: ContentRequest; onDeleted: () => void }) {
+  const { message, hint } = getErrorInfo(post);
+
+  return (
+    <div className="p-3 space-y-2">
+      <div className="rounded-lg bg-red-50 border border-red-100 px-3 py-2">
+        <p className="text-xs font-semibold text-red-700">{message}</p>
+        <p className="text-xs text-red-500 mt-0.5">{hint}</p>
+      </div>
+      <div className="flex justify-end">
+        <DeleteButton postId={post.id} onDeleted={onDeleted} />
+      </div>
+    </div>
+  );
+}
+
+function RejectedCard({ post, onDeleted }: { post: ContentRequest; onDeleted: () => void }) {
+  return (
+    <div className="p-3 space-y-2">
+      {post.error_message && (
+        <div className="rounded-lg bg-orange-50 border border-orange-100 px-3 py-2">
+          <p className="text-xs font-semibold text-orange-700">Descartado</p>
+          <p className="text-xs text-orange-500 mt-0.5">{post.error_message}</p>
+        </div>
+      )}
+      <div className="flex justify-end">
+        <DeleteButton postId={post.id} onDeleted={onDeleted} />
+      </div>
     </div>
   );
 }
