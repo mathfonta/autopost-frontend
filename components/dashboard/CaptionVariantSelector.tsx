@@ -23,11 +23,14 @@ export function CaptionVariantSelector({ post, onVariantSelected }: Props) {
 
   if (!post.caption_long) return null;
 
-  const tabs: Tab[] = [
+  const allTabs: Array<{ key: Variant; label: string; text: string | null }> = [
     { key: "long",    label: "Completa", text: post.caption_long },
     { key: "short",   label: "Curta",    text: post.caption_short },
     { key: "stories", label: "Stories",  text: post.caption_stories },
-  ].filter((t) => t.text) as Tab[];
+  ];
+  const tabs: Tab[] = allTabs.flatMap((t) =>
+    t.text ? [{ key: t.key, label: t.label, text: t.text }] : []
+  );
 
   if (tabs.length <= 1) return null;
 
