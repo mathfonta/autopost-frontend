@@ -1,22 +1,28 @@
 "use client";
 
 import { useState } from "react";
-import { X } from "lucide-react";
+import { Zap } from "lucide-react";
+import { BottomSheet, SheetCloseButton } from "@/components/ui/BottomSheet";
 import { VoiceToneSelector } from "./VoiceToneSelector";
+import { POST_TYPE_MAP, type PostTypeId } from "@/lib/post-types";
 import type { VoiceTone } from "@/lib/types";
 
 interface ContextModalProps {
+  open:            boolean;
+  postTypeId:      PostTypeId | null;
   photoPreviewUrl: string;
-  currentTone?: VoiceTone | null;
-  onToneChanged?: () => void;
-  onConfirm: (context: string) => void;
-  onSkip: () => void;
-  onClose: () => void;
+  currentTone?:    VoiceTone | null;
+  onToneChanged?:  () => void;
+  onConfirm:       (context: string) => void;
+  onSkip:          () => void;
+  onClose:         () => void;
 }
 
 const MAX_CHARS = 200;
 
 export function ContextModal({
+  open,
+  postTypeId,
   photoPreviewUrl,
   currentTone,
   onToneChanged,
@@ -25,72 +31,91 @@ export function ContextModal({
   onClose,
 }: ContextModalProps) {
   const [context, setContext] = useState("");
+  const pt = postTypeId ? POST_TYPE_MAP[postTypeId] : null;
+
+  function handleConfirm() {
+    const trimmed = context.trim();
+    setContext("");
+    onConfirm(trimmed);
+  }
+
+  function handleSkip() {
+    setContext("");
+    onSkip();
+  }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative w-full sm:max-w-md bg-white rounded-t-2xl sm:rounded-2xl px-5 pt-5 pb-8 space-y-4">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold text-gray-700">
-            Preparar post
-          </p>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        {/* Preview da foto */}
-        <div className="flex gap-3 items-start">
+    <BottomSheet open={open} onClose={onClose}>
+      {/* Header */}
+      <div className="flex items-center justify-between px-5 pb-4 pt-3">
+        <div className="flex items-center gap-[10px]">
           <img
             src={photoPreviewUrl}
-            alt="Foto selecionada"
-            className="w-16 h-16 rounded-xl object-cover shrink-0 border border-gray-100"
+            alt=""
+            className="h-9 w-9 rounded-[10px] object-cover"
           />
-          <p className="text-xs text-gray-500 leading-relaxed pt-1">
-            Descreva o serviço, material ou produto. A IA usa isso para refinar a copy.
+          <div>
+            <p className="text-[16px] font-extrabold text-[var(--text-1)]">Preparar post</p>
+            {pt && (
+              <p className="text-[12px] font-bold" style={{ color: pt.color }}>
+                {pt.label}
+              </p>
+            )}
+          </div>
+        </div>
+        <SheetCloseButton onClose={onClose} />
+      </div>
+
+      <div className="px-5 pb-7">
+        {/* Tom de voz */}
+        {currentTone !== undefined && onToneChanged && (
+          <div className="mb-4">
+            <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[.07em] text-[var(--text-3)]">
+              Tom de voz
+            </p>
+            <VoiceToneSelector currentTone={currentTone} onChanged={onToneChanged} />
+          </div>
+        )}
+
+        {/* Contexto */}
+        <div className="mb-6">
+          <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[.07em] text-[var(--text-3)]">
+            Descreva o conteúdo
+          </p>
+          <div className="relative">
+            <textarea
+              value={context}
+              onChange={(e) => setContext(e.target.value.slice(0, MAX_CHARS))}
+              placeholder="Ex: revestimento em porcelanato, banheiro social..."
+              rows={3}
+              className="w-full resize-none rounded-[12px] border-2 border-[var(--border)] bg-[var(--bg-input)] p-[12px_14px] text-[14px] leading-relaxed text-[var(--text-1)] outline-none transition-colors placeholder:text-[var(--text-4)] focus:border-[var(--border)]"
+              style={{ fontFamily: "inherit" }}
+              onFocus={(e) => pt && (e.target.style.borderColor = pt.color)}
+              onBlur={(e)  => (e.target.style.borderColor = "var(--border)")}
+              autoFocus
+            />
+          </div>
+          <p className="mt-1 text-right text-[11px] text-[var(--text-4)]">
+            {context.length}/{MAX_CHARS}
           </p>
         </div>
 
-        {/* Tom de voz (quando disponível) */}
-        {currentTone !== undefined && onToneChanged && (
-          <VoiceToneSelector
-            currentTone={currentTone}
-            onChanged={onToneChanged}
-          />
-        )}
+        <button
+          onClick={handleConfirm}
+          className="tap flex w-full items-center justify-center gap-2 rounded-[14px] py-4 text-[16px] font-extrabold text-white"
+          style={{ background: pt?.color ?? "#2354E8" }}
+        >
+          <Zap size={14} fill="white" strokeWidth={0} />
+          Gerar copy com IA
+        </button>
 
-        {/* Campo de contexto */}
-        <div className="relative">
-          <textarea
-            value={context}
-            onChange={(e) => setContext(e.target.value.slice(0, MAX_CHARS))}
-            placeholder="Ex: revestimento em porcelanato, banheiro social, água quente e fria..."
-            rows={3}
-            className="w-full text-sm rounded-xl border border-gray-200 px-3 py-2.5 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-300"
-            autoFocus
-          />
-          <span className="absolute bottom-2 right-3 text-xs text-gray-300">
-            {context.length}/{MAX_CHARS}
-          </span>
-        </div>
-
-        {/* Ações */}
-        <div className="flex flex-col gap-2">
-          <button
-            onClick={() => onConfirm(context)}
-            className="w-full py-3 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 active:scale-95 transition-all"
-          >
-            Gerar copy
-          </button>
-          <button
-            onClick={onSkip}
-            className="w-full py-2 text-sm text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            Pular este passo
-          </button>
-        </div>
+        <button
+          onClick={handleSkip}
+          className="mt-[10px] w-full py-[10px] text-[13px] font-semibold text-[var(--text-4)]"
+        >
+          Pular este passo
+        </button>
       </div>
-    </div>
+    </BottomSheet>
   );
 }

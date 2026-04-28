@@ -7,7 +7,7 @@ import { StatusBadge } from "./StatusBadge";
 import { ApprovalButtons } from "./ApprovalButtons";
 import { CaptionEditor } from "./CaptionEditor";
 import { CaptionVariantSelector } from "./CaptionVariantSelector";
-import { INTENT_LABELS } from "./IntentMenu";
+import { POST_TYPE_MAP } from "@/lib/post-types";
 import { deleteContentRequest } from "@/lib/api";
 import { getErrorInfo } from "@/lib/errorMessages";
 import type { ContentRequest } from "@/lib/types";
@@ -126,9 +126,9 @@ export function PostCard({ post, onAction }: PostCardProps) {
       {/* Conteúdo */}
       {isAwaitingApproval ? (
         <div className="p-3">
-          {post.content_type && INTENT_LABELS[post.content_type] && (
+          {post.content_type && POST_TYPE_MAP[post.content_type as keyof typeof POST_TYPE_MAP] && (
             <p className="text-xs text-blue-500 font-medium mb-1">
-              {INTENT_LABELS[post.content_type]}
+              {POST_TYPE_MAP[post.content_type as keyof typeof POST_TYPE_MAP].label}
             </p>
           )}
           {caption && (
