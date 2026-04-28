@@ -6,6 +6,7 @@ import { ExternalLink, ImageOff } from "lucide-react";
 import { StatusBadge } from "./StatusBadge";
 import { ApprovalButtons } from "./ApprovalButtons";
 import { CaptionEditor } from "./CaptionEditor";
+import { CaptionVariantSelector } from "./CaptionVariantSelector";
 import { INTENT_LABELS } from "./IntentMenu";
 import type { ContentRequest } from "@/lib/types";
 
@@ -76,7 +77,12 @@ export function PostCard({ post, onAction }: PostCardProps) {
         {/* Legenda */}
         {caption ? (
           <div className="mb-2">
-            {isAwaitingApproval ? (
+            {isAwaitingApproval && post.caption_long ? (
+              <CaptionVariantSelector
+                post={post}
+                onVariantSelected={(text) => setEditedCaption(text)}
+              />
+            ) : isAwaitingApproval ? (
               <CaptionEditor
                 postId={post.id}
                 caption={caption}

@@ -46,6 +46,10 @@ export interface ContentRequest {
   caption_edited: boolean;
   retry_count: number;
   content_type: string | null;
+  caption_long: string | null;
+  caption_short: string | null;
+  caption_stories: string | null;
+  caption_selected: "long" | "short" | "stories" | null;
   created_at: string;
   updated_at: string;
 }

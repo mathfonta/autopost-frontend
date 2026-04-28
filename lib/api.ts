@@ -42,6 +42,18 @@ export async function patchContentRequest(id: string, caption: string): Promise<
   return data;
 }
 
+export async function selectCaptionVariant(
+  id: string,
+  caption_selected: "long" | "short" | "stories",
+  caption: string,
+): Promise<ContentRequest> {
+  const { data } = await api.patch<ContentRequest>(`/content-requests/${id}`, {
+    caption_selected,
+    caption,
+  });
+  return data;
+}
+
 export async function retryContentRequest(id: string): Promise<{ id: string; status: string; retry_count: number }> {
   const { data } = await api.post(`/content-requests/${id}/retry`);
   return data;
