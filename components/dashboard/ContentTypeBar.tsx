@@ -13,11 +13,11 @@ interface ContentTypeBarProps {
 }
 
 const CONTENT_TYPES = [
-  { value: "post_simples",   emoji: "📸", label: "Post Simples",       description: "Publicação de obra ou produto" },
-  { value: "obra_andamento", emoji: "🔨", label: "Obra em Andamento",  description: "Progresso de projeto" },
-  { value: "obra_concluida", emoji: "✅", label: "Obra Concluída",     description: "Resultado final entregue" },
-  { value: "engajamento",    emoji: "💬", label: "Engajamento",        description: "Pergunta ou enquete" },
-  { value: "bastidores",     emoji: "🎉", label: "Bastidores",         description: "Momento da equipe ou processo" },
+  { value: "post_simples",   emoji: "📸", label: "Post Simples",      description: "Publicação de obra ou produto", color: "#2354E8", bg: "#EEF2FF" },
+  { value: "obra_andamento", emoji: "🔨", label: "Obra em Andamento", description: "Progresso de projeto",          color: "#D97706", bg: "#FEF3C7" },
+  { value: "obra_concluida", emoji: "✅", label: "Obra Concluída",    description: "Resultado final entregue",      color: "#16A34A", bg: "#DCFCE7" },
+  { value: "engajamento",    emoji: "💬", label: "Engajamento",       description: "Pergunta ou enquete",           color: "#7C3AED", bg: "#EDE9FE" },
+  { value: "bastidores",     emoji: "🎉", label: "Bastidores",        description: "Momento da equipe ou processo", color: "#DB2777", bg: "#FCE7F3" },
 ];
 
 export function ContentTypeBar({ onUploadComplete, currentTone, onToneChanged }: ContentTypeBarProps) {
@@ -133,24 +133,55 @@ export function ContentTypeBar({ onUploadComplete, currentTone, onToneChanged }:
 
       {/* Barra de tipos de conteúdo */}
       <div className="rounded-2xl border border-gray-100 bg-white mb-6 overflow-hidden shadow-sm">
-        <div className="px-4 pt-4 pb-1">
+        <div className="px-4 pt-4 pb-2">
           <p className="text-sm font-bold text-gray-900">O que vamos postar hoje?</p>
         </div>
-        <div className="px-2 pb-2 mt-1 space-y-0.5">
-          {CONTENT_TYPES.map((type) => (
+
+        {/* Grid 2×2 + Bastidores full-width */}
+        <div className="px-3 pb-3 grid grid-cols-2 gap-2">
+          {CONTENT_TYPES.slice(0, 4).map((type) => (
             <button
               key={type.value}
               onClick={() => handleTypeClick(type.value)}
               disabled={uploading}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 active:bg-blue-50 transition-colors text-left disabled:opacity-50"
+              className="flex flex-col gap-2 p-3 rounded-2xl bg-gray-50 hover:bg-gray-100 active:scale-[.97] transition-all text-left disabled:opacity-50 min-h-[92px]"
             >
-              <span className="text-xl w-8 text-center leading-none">{type.emoji}</span>
+              <div
+                className="w-8 h-8 rounded-[9px] flex items-center justify-center shrink-0"
+                style={{ background: type.bg }}
+              >
+                <span className="text-base leading-none">{type.emoji}</span>
+              </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-800">{type.label}</p>
-                <p className="text-xs text-gray-400">{type.description}</p>
+                <p className="text-[13px] font-bold text-gray-900 leading-snug">{type.label}</p>
+                <p className="text-[11px] text-gray-400 leading-snug mt-0.5">{type.description}</p>
               </div>
               {uploading && uploadingType === type.value && (
-                <div className="h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin shrink-0" />
+                <div className="h-3.5 w-3.5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" style={{ borderColor: type.color, borderTopColor: "transparent" }} />
+              )}
+            </button>
+          ))}
+
+          {/* Bastidores — ocupa linha inteira */}
+          {CONTENT_TYPES.slice(4).map((type) => (
+            <button
+              key={type.value}
+              onClick={() => handleTypeClick(type.value)}
+              disabled={uploading}
+              className="col-span-2 flex items-center gap-3 px-3 py-3 rounded-2xl bg-gray-50 hover:bg-gray-100 active:scale-[.97] transition-all text-left disabled:opacity-50"
+            >
+              <div
+                className="w-8 h-8 rounded-[9px] flex items-center justify-center shrink-0"
+                style={{ background: type.bg }}
+              >
+                <span className="text-base leading-none">{type.emoji}</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-bold text-gray-900">{type.label}</p>
+                <p className="text-[11px] text-gray-400">{type.description}</p>
+              </div>
+              {uploading && uploadingType === type.value && (
+                <div className="h-3.5 w-3.5 border-2 border-t-transparent rounded-full animate-spin shrink-0" style={{ borderColor: type.color, borderTopColor: "transparent" }} />
               )}
             </button>
           ))}
