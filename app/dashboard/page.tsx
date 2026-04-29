@@ -12,12 +12,13 @@ import { UploadScreen } from "@/components/dashboard/UploadScreen";
 import { PhotoPreview } from "@/components/dashboard/PhotoPreview";
 import { ContextModal } from "@/components/dashboard/ContextModal";
 import { MetaTokenWarning } from "@/components/dashboard/MetaTokenWarning";
+import { SubStrategySelector } from "@/components/dashboard/SubStrategySelector";
 import { POST_TYPE_MAP } from "@/lib/post-types";
 import { api, getMetaStatus, retryContentRequest, type MetaStatus } from "@/lib/api";
 import type { PostTypeId } from "@/lib/post-types";
 import type { ContentRequest, VoiceTone } from "@/lib/types";
 
-type Screen = "dashboard" | "upload" | "preview";
+type Screen = "dashboard" | "strategy" | "upload" | "preview";
 
 const ACCENT = "#2354E8";
 
@@ -36,6 +37,7 @@ export default function DashboardPage() {
 
   const [screen,      setScreen]      = useState<Screen>("dashboard");
   const [postTypeId,  setPostTypeId]  = useState<PostTypeId | null>(null);
+  const [strategyId,  setStrategyId]  = useState<string | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [photoUrl,    setPhotoUrl]    = useState<string | null>(null);
 
@@ -50,7 +52,19 @@ export default function DashboardPage() {
 
   function handleTypeSelected(id: PostTypeId) {
     setPostTypeId(id);
+    setStrategyId(null);
+    setScreen("strategy");
+  }
+
+  function handleStrategySelected(id: string) {
+    setStrategyId(id);
     setScreen("upload");
+  }
+
+  function handleStrategyBack() {
+    setScreen("dashboard");
+    setPostTypeId(null);
+    setStrategyId(null);
   }
 
   function handlePhotoSelected(file: File, url: string) {
@@ -72,8 +86,8 @@ export default function DashboardPage() {
   }
 
   function handleUploadBack() {
-    setScreen("dashboard");
-    setPostTypeId(null);
+    setScreen("strategy");
+    setStrategyId(null);
   }
 
   async function uploadFile(file: File, intent: PostTypeId | null, context: string | null) {
@@ -83,8 +97,9 @@ export default function DashboardPage() {
     try {
       const formData = new FormData();
       formData.append("photo", file);
-      if (intent)          formData.append("content_type", intent);
-      if (context?.trim()) formData.append("user_context", context.trim());
+      if (intent)            formData.append("content_type", intent);
+      if (strategyId)        formData.append("strategy", strategyId);
+      if (context?.trim())   formData.append("user_context", context.trim());
       await api.post("/content-requests", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
@@ -103,6 +118,7 @@ export default function DashboardPage() {
     setPhotoUrl(null);
     setPendingFile(null);
     setPostTypeId(null);
+    setStrategyId(null);
   }
 
   function handleContextConfirm(context: string) {
@@ -132,6 +148,17 @@ export default function DashboardPage() {
   const pendingPosts   = posts.filter((p) => p.status === "awaiting_approval");
   const publishedPosts = posts.filter((p) => p.status === "published");
   const failedPosts    = posts.filter((p) => p.status === "failed");
+
+  // ── Tela Sub-estratégia ───────────────────────────────────────────────────
+  if (screen === "strategy" && postTypeId) {
+    return (
+      <SubStrategySelector
+        postTypeId={postTypeId}
+        onBack={handleStrategyBack}
+        onSelect={handleStrategySelected}
+      />
+    );
+  }
 
   // ── Tela Upload ───────────────────────────────────────────────────────────
   if (screen === "upload" && postTypeId) {
