@@ -35,11 +35,12 @@ export default function DashboardPage() {
   const { posts, error, loading, refresh } = useContentRequests();
   const [metaStatus, setMetaStatus] = useState<MetaStatus | null>(null);
 
-  const [screen,      setScreen]      = useState<Screen>("dashboard");
-  const [postTypeId,  setPostTypeId]  = useState<PostTypeId | null>(null);
-  const [strategyId,  setStrategyId]  = useState<string | null>(null);
-  const [pendingFile, setPendingFile] = useState<File | null>(null);
-  const [photoUrl,    setPhotoUrl]    = useState<string | null>(null);
+  const [screen,        setScreen]        = useState<Screen>("dashboard");
+  const [postTypeId,    setPostTypeId]    = useState<PostTypeId | null>(null);
+  const [strategyId,    setStrategyId]    = useState<string | null>(null);
+  const [pendingFile,   setPendingFile]   = useState<File | null>(null);
+  const [pendingFiles,  setPendingFiles]  = useState<File[]>([]);
+  const [photoUrl,      setPhotoUrl]      = useState<string | null>(null);
 
   const [contextOpen,   setContextOpen]   = useState(false);
   const [uploading,     setUploading]     = useState(false);
@@ -70,7 +71,21 @@ export default function DashboardPage() {
   function handlePhotoSelected(file: File, url: string) {
     setPendingFile(file);
     setPhotoUrl(url);
-    setScreen("preview");
+    // vídeos saltam o PhotoPreview (que renderiza <img>) e vão direto ao contexto
+    if (file.type.startsWith("video/")) {
+      setScreen("dashboard");
+      setContextOpen(true);
+    } else {
+      setScreen("preview");
+    }
+  }
+
+  function handlePhotosSelected(files: File[]) {
+    setPendingFiles(files);
+    const url = URL.createObjectURL(files[0]);
+    setPhotoUrl(url);
+    setScreen("dashboard");
+    setContextOpen(true);
   }
 
   function handlePreviewConfirm() {
@@ -90,22 +105,30 @@ export default function DashboardPage() {
     setStrategyId(null);
   }
 
-  async function uploadFile(file: File, intent: PostTypeId | null, context: string | null) {
+  async function uploadFile(
+    files: File | File[],
+    intent: PostTypeId | null,
+    context: string | null,
+  ) {
     setUploadError(null);
     setUploading(true);
     setUploadingType(intent);
     try {
       const formData = new FormData();
-      formData.append("photo", file);
-      if (intent)            formData.append("content_type", intent);
-      if (strategyId)        formData.append("strategy", strategyId);
-      if (context?.trim())   formData.append("user_context", context.trim());
+      if (intent === "carousel") {
+        (files as File[]).forEach(f => formData.append("photos", f));
+      } else {
+        formData.append("photo", Array.isArray(files) ? files[0] : files);
+      }
+      if (intent)           formData.append("content_type", intent);
+      if (strategyId)       formData.append("strategy", strategyId);
+      if (context?.trim())  formData.append("user_context", context.trim());
       await api.post("/content-requests", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       refresh();
     } catch {
-      setUploadError("Erro ao enviar foto. Tente novamente.");
+      setUploadError("Erro ao enviar. Tente novamente.");
     } finally {
       setUploading(false);
       setUploadingType(null);
@@ -117,18 +140,27 @@ export default function DashboardPage() {
     if (photoUrl) URL.revokeObjectURL(photoUrl);
     setPhotoUrl(null);
     setPendingFile(null);
+    setPendingFiles([]);
     setPostTypeId(null);
     setStrategyId(null);
   }
 
   function handleContextConfirm(context: string) {
     setContextOpen(false);
-    if (pendingFile) uploadFile(pendingFile, postTypeId, context || null);
+    if (postTypeId === "carousel") {
+      if (pendingFiles.length >= 2) uploadFile(pendingFiles, postTypeId, context || null);
+    } else if (pendingFile) {
+      uploadFile(pendingFile, postTypeId, context || null);
+    }
   }
 
   function handleContextSkip() {
     setContextOpen(false);
-    if (pendingFile) uploadFile(pendingFile, postTypeId, null);
+    if (postTypeId === "carousel") {
+      if (pendingFiles.length >= 2) uploadFile(pendingFiles, postTypeId, null);
+    } else if (pendingFile) {
+      uploadFile(pendingFile, postTypeId, null);
+    }
   }
 
   function handleContextClose() {
@@ -167,6 +199,7 @@ export default function DashboardPage() {
         postTypeId={postTypeId}
         onBack={handleUploadBack}
         onPhotoSelected={handlePhotoSelected}
+        onPhotosSelected={handlePhotosSelected}
       />
     );
   }
