@@ -101,8 +101,8 @@ export default function HistoryPage() {
         <h1 className="flex-1 text-center text-[17px] font-extrabold tracking-tight text-(--text-1)">
           Histórico
         </h1>
-        <div className="w-9 shrink-0">
-          <span className="text-[12px] font-medium text-(--text-3)">
+        <div className="shrink-0">
+          <span className="whitespace-nowrap text-[12px] font-medium text-(--text-3)">
             {new Date().toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
           </span>
         </div>

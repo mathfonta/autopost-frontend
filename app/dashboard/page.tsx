@@ -365,13 +365,23 @@ function GalleryGrid({
             {/* Ação no rodapé */}
             <div className="absolute bottom-0 left-0 right-0 p-[6px]">
               {pub ? (
-                <div className="flex w-full items-center justify-center gap-[3px] rounded-[7px] border border-white/30 bg-white/15 py-1 backdrop-blur-sm">
-                  {pt && (
-                    <span className="text-[8px] font-extrabold text-white/80">
-                      {pt.label}
-                    </span>
-                  )}
-                </div>
+                (() => {
+                  const permalink = (post.publish_result as { permalink?: string } | undefined)?.permalink;
+                  const inner = (
+                    <>
+                      {pt && <span className="text-[8px] font-extrabold text-white/80">{pt.label}</span>}
+                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                        <polyline points="15 3 21 3 21 9" />
+                        <line x1="10" y1="14" x2="21" y2="3" />
+                      </svg>
+                    </>
+                  );
+                  const cls = "flex w-full items-center justify-center gap-0.75 rounded-[7px] border border-white/30 bg-white/15 py-1 backdrop-blur-sm";
+                  return permalink
+                    ? <a href={permalink} target="_blank" rel="noopener noreferrer" className={cls}>{inner}</a>
+                    : <div className={cls}>{inner}</div>;
+                })()
               ) : (
                 <button
                   onClick={() => onRetry(post)}

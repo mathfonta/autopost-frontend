@@ -29,13 +29,15 @@ export default function RootLayout({
         <meta name="theme-color" content="#2563EB" />
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
       </head>
-      <body className="min-h-full flex flex-col bg-gray-50">
-        <AuthProvider>
-          <ToastProvider>
-            <ServiceWorkerRegistrar />
-            {children}
-          </ToastProvider>
-        </AuthProvider>
+      <body className="min-h-full bg-gray-50">
+        <div className="mx-auto flex min-h-full w-full max-w-107.5 flex-col">
+          <AuthProvider>
+            <ToastProvider>
+              <ServiceWorkerRegistrar />
+              {children}
+            </ToastProvider>
+          </AuthProvider>
+        </div>
       </body>
     </html>
   );

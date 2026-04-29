@@ -44,11 +44,10 @@ export function VoiceToneSelector({ currentTone, onChanged }: Props) {
   }
 
   return (
-    <div className="rounded-xl border border-gray-100 bg-white px-4 py-3 mb-4">
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Tom de voz</p>
-        {saved && <span className="text-xs text-green-600">Salvo</span>}
-        {saving && <span className="text-xs text-gray-400">Salvando…</span>}
+    <div>
+      <div className="flex items-center justify-end h-4 mb-2">
+        {saved  && <span className="text-xs font-medium text-green-600">Salvo</span>}
+        {saving && <span className="text-xs text-(--text-4)">Salvando…</span>}
       </div>
       <div className="flex gap-2">
         {OPTIONS.map((opt) => (
@@ -56,16 +55,20 @@ export function VoiceToneSelector({ currentTone, onChanged }: Props) {
             key={opt.value}
             onClick={() => handleSelect(opt.value)}
             disabled={saving}
-            className={`flex-1 rounded-lg border px-2 py-2 text-left transition-colors ${
+            className="flex-1 rounded-icon border px-2 py-2 text-left transition-all"
+            style={
               selected === opt.value
-                ? "border-blue-500 bg-blue-50"
-                : "border-gray-200 bg-white hover:border-gray-300"
-            }`}
+                ? { borderColor: "#2354E8", background: "#2354E815" }
+                : { borderColor: "var(--border)", background: "var(--bg-input)" }
+            }
           >
-            <p className={`text-xs font-semibold ${selected === opt.value ? "text-blue-700" : "text-gray-700"}`}>
+            <p
+              className="text-xs font-semibold"
+              style={{ color: selected === opt.value ? "#2354E8" : "var(--text-2)" }}
+            >
               {opt.label}
             </p>
-            <p className="text-[10px] text-gray-400 leading-tight mt-0.5">{opt.description}</p>
+            <p className="text-[10px] leading-tight mt-0.5 text-(--text-4)">{opt.description}</p>
           </button>
         ))}
       </div>
