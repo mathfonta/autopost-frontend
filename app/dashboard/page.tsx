@@ -203,6 +203,19 @@ export default function DashboardPage() {
   const publishedPosts = posts.filter((p) => p.status === "published");
   const failedPosts    = posts.filter((p) => p.status === "failed");
 
+  // ── Overlay de upload ────────────────────────────────────────────────────
+  if (uploading) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-(--bg-shell) gap-4">
+        <div
+          className="h-14 w-14 animate-spin rounded-full border-4 border-(--border)"
+          style={{ borderTopColor: ACCENT }}
+        />
+        <p className="text-[15px] font-semibold text-(--text-2)">Enviando...</p>
+      </div>
+    );
+  }
+
   // ── Tela Sub-estratégia ───────────────────────────────────────────────────
   if (screen === "strategy" && postTypeId) {
     return (
