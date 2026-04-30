@@ -13,12 +13,13 @@ import { PhotoPreview } from "@/components/dashboard/PhotoPreview";
 import { ContextModal } from "@/components/dashboard/ContextModal";
 import { MetaTokenWarning } from "@/components/dashboard/MetaTokenWarning";
 import { SubStrategySelector } from "@/components/dashboard/SubStrategySelector";
+import { GeneratingScreen } from "@/components/dashboard/GeneratingScreen";
 import { POST_TYPE_MAP } from "@/lib/post-types";
 import { api, getMetaStatus, retryContentRequest, type MetaStatus } from "@/lib/api";
 import type { PostTypeId } from "@/lib/post-types";
 import type { ContentRequest, VoiceTone } from "@/lib/types";
 
-type Screen = "dashboard" | "strategy" | "upload" | "preview";
+type Screen = "dashboard" | "strategy" | "upload" | "preview" | "generating";
 
 const ACCENT = "#2354E8";
 
@@ -46,6 +47,7 @@ export default function DashboardPage() {
   const [uploading,     setUploading]     = useState(false);
   const [uploadingType, setUploadingType] = useState<PostTypeId | null>(null);
   const [uploadError,   setUploadError]   = useState<string | null>(null);
+  const [generatingId,  setGeneratingId]  = useState<string | null>(null);
 
   useEffect(() => {
     getMetaStatus().then(setMetaStatus).catch(() => null);
@@ -123,17 +125,37 @@ export default function DashboardPage() {
       if (intent)           formData.append("content_type", intent);
       if (strategyId)       formData.append("strategy", strategyId);
       if (context?.trim())  formData.append("user_context", context.trim());
-      await api.post("/content-requests", formData, {
+      const { data } = await api.post<{ id: string }>("/content-requests", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      refresh();
+      cleanupPhoto();
+      setGeneratingId(data.id);
+      setScreen("generating");
     } catch {
       setUploadError("Erro ao enviar. Tente novamente.");
+      cleanupPhoto();
     } finally {
       setUploading(false);
       setUploadingType(null);
-      cleanupPhoto();
     }
+  }
+
+  function handleGeneratingDone(_post: ContentRequest) {
+    setGeneratingId(null);
+    setScreen("dashboard");
+    refresh();
+  }
+
+  function handleGeneratingError() {
+    setGeneratingId(null);
+    setScreen("dashboard");
+    refresh();
+  }
+
+  function handleGeneratingCancel() {
+    setGeneratingId(null);
+    setScreen("dashboard");
+    refresh();
   }
 
   function cleanupPhoto() {
@@ -188,6 +210,18 @@ export default function DashboardPage() {
         postTypeId={postTypeId}
         onBack={handleStrategyBack}
         onSelect={handleStrategySelected}
+      />
+    );
+  }
+
+  // ── Tela Geração ─────────────────────────────────────────────────────────
+  if (screen === "generating" && generatingId) {
+    return (
+      <GeneratingScreen
+        requestId={generatingId}
+        onDone={handleGeneratingDone}
+        onError={handleGeneratingError}
+        onCancel={handleGeneratingCancel}
       />
     );
   }
