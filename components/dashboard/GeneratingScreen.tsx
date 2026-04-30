@@ -23,13 +23,16 @@ interface GeneratingScreenProps {
 }
 
 export function GeneratingScreen({ requestId, onDone, onError, onCancel }: GeneratingScreenProps) {
-  const [status,  setStatus]  = useState<string>("pending");
-  const [elapsed, setElapsed] = useState(0);
+  const [status,   setStatus]   = useState<string>("pending");
+  const [elapsed,  setElapsed]  = useState(0);
+  const [donePost, setDonePost] = useState<ContentRequest | null>(null);
 
-  const handleDone  = useCallback(onDone,   [onDone]);
-  const handleError = useCallback(onError,  [onError]);
+  const handleDone  = useCallback(onDone,  [onDone]);
+  const handleError = useCallback(onError, [onError]);
 
   useEffect(() => {
+    if (donePost) return; // polling parado — aguardando ação do usuário
+
     let active = true;
 
     async function poll() {
@@ -38,7 +41,7 @@ export function GeneratingScreen({ requestId, onDone, onError, onCancel }: Gener
         if (!active) return;
         setStatus(req.status);
         if (req.status === "awaiting_approval") {
-          handleDone(req);
+          setDonePost(req); // mostra done state; usuário clica para continuar
         } else if (req.status === "failed") {
           handleError();
         }
@@ -50,7 +53,7 @@ export function GeneratingScreen({ requestId, onDone, onError, onCancel }: Gener
     poll();
     const iv = setInterval(poll, 3000);
     return () => { active = false; clearInterval(iv); };
-  }, [requestId, handleDone, handleError]);
+  }, [requestId, handleError, donePost]);
 
   useEffect(() => {
     const t = setInterval(() => setElapsed(e => e + 1), 1000);
@@ -66,9 +69,63 @@ export function GeneratingScreen({ requestId, onDone, onError, onCancel }: Gener
     return "pending";
   }
 
-  const mins   = Math.floor(elapsed / 60);
-  const secs   = elapsed % 60;
-  const timer  = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+  const mins  = Math.floor(elapsed / 60);
+  const secs  = elapsed % 60;
+  const timer = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+
+  // ── Done state ─────────────────────────────────────────────────
+  if (donePost) {
+    return (
+      <div className="flex min-h-screen flex-col bg-(--bg-shell)">
+        <header className="sticky top-0 z-10 flex h-13.5 shrink-0 items-center border-b border-(--border) bg-(--bg-card) px-5">
+          <div className="flex items-center gap-2">
+            <div className="flex h-6.5 w-6.5 items-center justify-center rounded-[7px] text-white" style={{ background: ACCENT }}>
+              <Zap size={13} fill="white" strokeWidth={0} />
+            </div>
+            <span className="text-[17px] font-extrabold tracking-tight text-(--text-1)">AutoPost</span>
+          </div>
+        </header>
+
+        <main className="flex flex-1 flex-col items-center justify-center px-6 pb-16">
+          {/* Ícone de sucesso */}
+          <div className="mb-8 flex h-20 w-20 items-center justify-center rounded-full bg-post-concluida">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          </div>
+
+          <h1 className="mb-1 text-[20px] font-extrabold tracking-tight text-(--text-1)">
+            Post criado com sucesso!
+          </h1>
+          <p className="mb-10 text-sm text-(--text-3)">Gerado em {timer}</p>
+
+          {/* Todas as etapas concluídas */}
+          <div className="w-full max-w-xs space-y-4">
+            <StageRow state="done" label="Foto enviada" />
+            {STAGES.map(({ status: s, label }) => (
+              <StageRow key={s} state="done" label={label} />
+            ))}
+          </div>
+
+          {/* CTA */}
+          <button
+            onClick={() => handleDone(donePost)}
+            className="mt-10 w-full max-w-xs rounded-[14px] py-4 text-[16px] font-extrabold text-white"
+            style={{ background: ACCENT }}
+          >
+            Revisar e aprovar →
+          </button>
+
+          <button
+            onClick={onCancel}
+            className="mt-4 text-[13px] font-semibold text-(--text-4) underline-offset-2 hover:underline"
+          >
+            Voltar ao início
+          </button>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-(--bg-shell)">

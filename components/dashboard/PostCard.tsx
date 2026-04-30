@@ -13,8 +13,9 @@ import { getErrorInfo } from "@/lib/errorMessages";
 import type { ContentRequest } from "@/lib/types";
 
 interface PostCardProps {
-  post: ContentRequest;
+  post:     ContentRequest;
   onAction: () => void;
+  onOpen?:  () => void;
 }
 
 function getCaption(post: ContentRequest): string {
@@ -73,7 +74,7 @@ function DeleteButton({ postId, onDeleted }: { postId: string; onDeleted: () => 
   );
 }
 
-export function PostCard({ post, onAction }: PostCardProps) {
+export function PostCard({ post, onAction, onOpen }: PostCardProps) {
   const router = useRouter();
   const [imgError, setImgError] = useState(false);
   const [editedCaption, setEditedCaption] = useState<string | null>(null);
@@ -102,8 +103,8 @@ export function PostCard({ post, onAction }: PostCardProps) {
       {/* Imagem */}
       <div
         className="relative aspect-square bg-gray-100 cursor-pointer"
-        onClick={() => router.push(`/posts/${post.id}`)}
-        title="Ver preview completo"
+        onClick={onOpen ?? (() => router.push(`/posts/${post.id}`))}
+        title={onOpen ? "Revisar post" : "Ver preview completo"}
       >
         {!imgError ? (
           <img

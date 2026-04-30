@@ -14,12 +14,13 @@ import { ContextModal } from "@/components/dashboard/ContextModal";
 import { MetaTokenWarning } from "@/components/dashboard/MetaTokenWarning";
 import { SubStrategySelector } from "@/components/dashboard/SubStrategySelector";
 import { GeneratingScreen } from "@/components/dashboard/GeneratingScreen";
+import { ApprovalScreen }   from "@/components/dashboard/ApprovalScreen";
 import { POST_TYPE_MAP } from "@/lib/post-types";
 import { api, getMetaStatus, retryContentRequest, type MetaStatus } from "@/lib/api";
 import type { PostTypeId } from "@/lib/post-types";
 import type { ContentRequest, VoiceTone } from "@/lib/types";
 
-type Screen = "dashboard" | "strategy" | "upload" | "preview" | "generating";
+type Screen = "dashboard" | "strategy" | "upload" | "preview" | "generating" | "approval";
 
 const ACCENT = "#2354E8";
 
@@ -48,6 +49,7 @@ export default function DashboardPage() {
   const [uploadingType, setUploadingType] = useState<PostTypeId | null>(null);
   const [uploadError,   setUploadError]   = useState<string | null>(null);
   const [generatingId,  setGeneratingId]  = useState<string | null>(null);
+  const [approvalPost,  setApprovalPost]  = useState<ContentRequest | null>(null);
 
   useEffect(() => {
     getMetaStatus().then(setMetaStatus).catch(() => null);
@@ -140,10 +142,10 @@ export default function DashboardPage() {
     }
   }
 
-  function handleGeneratingDone(_post: ContentRequest) {
+  function handleGeneratingDone(post: ContentRequest) {
     setGeneratingId(null);
-    setScreen("dashboard");
-    refresh();
+    setApprovalPost(post);
+    setScreen("approval");
   }
 
   function handleGeneratingError() {
@@ -154,6 +156,12 @@ export default function DashboardPage() {
 
   function handleGeneratingCancel() {
     setGeneratingId(null);
+    setScreen("dashboard");
+    refresh();
+  }
+
+  function handleApprovalBack() {
+    setApprovalPost(null);
     setScreen("dashboard");
     refresh();
   }
@@ -202,6 +210,17 @@ export default function DashboardPage() {
   const pendingPosts   = posts.filter((p) => p.status === "awaiting_approval");
   const publishedPosts = posts.filter((p) => p.status === "published");
   const failedPosts    = posts.filter((p) => p.status === "failed");
+
+  // ── Tela de Aprovação ────────────────────────────────────────────────────
+  if (screen === "approval" && approvalPost) {
+    return (
+      <ApprovalScreen
+        post={approvalPost}
+        onBack={handleApprovalBack}
+        onAction={handleApprovalBack}
+      />
+    );
+  }
 
   // ── Overlay de upload ────────────────────────────────────────────────────
   if (uploading) {
@@ -359,7 +378,12 @@ export default function DashboardPage() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {pendingPosts.map((post) => (
-                  <PostCard key={post.id} post={post} onAction={refresh} />
+                  <PostCard
+                    key={post.id}
+                    post={post}
+                    onAction={refresh}
+                    onOpen={() => { setApprovalPost(post); setScreen("approval"); }}
+                  />
                 ))}
               </div>
             </section>
