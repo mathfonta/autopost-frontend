@@ -71,8 +71,8 @@ export function ApprovalScreen({ post, onBack, onAction }: ApprovalScreenProps) 
         <span className="text-[17px] font-extrabold tracking-tight text-(--text-1)">Revisar post</span>
       </header>
 
-      {/* Conteúdo rolável — espaço extra no fundo para o footer fixo */}
-      <div className="flex-1 overflow-y-auto pb-28">
+      {/* Conteúdo rolável */}
+      <div className="flex-1 overflow-y-auto">
 
         {/* Mídia */}
         <div className="relative bg-black">
@@ -196,8 +196,8 @@ export function ApprovalScreen({ post, onBack, onAction }: ApprovalScreenProps) 
         </div>
       </div>
 
-      {/* Footer fixo — botões de aprovação */}
-      <div className="fixed bottom-0 left-0 right-0 border-t border-(--border) bg-(--bg-card) px-4 py-3">
+      {/* Footer — sempre visível no fundo do container */}
+      <div className="border-t border-(--border) bg-(--bg-card) px-4 py-3">
         <ApprovalButtons
           postId={post.id}
           retryCount={post.retry_count}
