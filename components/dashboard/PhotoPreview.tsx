@@ -1,22 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { ChevronLeft, Zap } from "lucide-react";
 import { POST_TYPE_MAP, type PostTypeId } from "@/lib/post-types";
-
-type CropRatio = "square" | "portrait" | "landscape";
-
-const CROP_OPTIONS: { id: CropRatio; label: string; sub: string }[] = [
-  { id: "square",    label: "1:1",    sub: "Feed" },
-  { id: "portrait",  label: "4:5",    sub: "Retrato" },
-  { id: "landscape", label: "1.91:1", sub: "Paisagem" },
-];
-
-const ASPECT: Record<CropRatio, string> = {
-  square:    "1 / 1",
-  portrait:  "4 / 5",
-  landscape: "1.91 / 1",
-};
 
 interface PhotoPreviewProps {
   postTypeId: PostTypeId;
@@ -26,7 +11,6 @@ interface PhotoPreviewProps {
 }
 
 export function PhotoPreview({ postTypeId, photoUrl, onBack, onConfirm }: PhotoPreviewProps) {
-  const [crop, setCrop] = useState<CropRatio>("square");
   const pt = POST_TYPE_MAP[postTypeId];
 
   return (
@@ -50,7 +34,6 @@ export function PhotoPreview({ postTypeId, photoUrl, onBack, onConfirm }: PhotoP
             src={photoUrl}
             alt="Preview"
             className="block w-full object-cover"
-            style={{ aspectRatio: ASPECT[crop] }}
           />
           <div
             className="pointer-events-none absolute inset-0"
@@ -63,34 +46,6 @@ export function PhotoPreview({ postTypeId, photoUrl, onBack, onConfirm }: PhotoP
         </div>
 
         <div className="px-4 pb-8 pt-4">
-          {/* Seletor de proporção */}
-          <div className="mb-5">
-            <p className="mb-2.5 text-[11px] font-extrabold uppercase tracking-[.07em] text-(--text-3)">
-              Formato
-            </p>
-            <div className="flex gap-2">
-              {CROP_OPTIONS.map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => setCrop(c.id)}
-                  className="tap flex-1 rounded-xl border-2 py-2.5 px-1.5 text-center transition-all duration-120"
-                  style={{
-                    borderColor: crop === c.id ? pt.color : "var(--border)",
-                    background:  crop === c.id ? `${pt.color}10` : "var(--bg-card)",
-                  }}
-                >
-                  <p
-                    className="text-[14px] font-bold"
-                    style={{ color: crop === c.id ? pt.color : "var(--text-1)" }}
-                  >
-                    {c.label}
-                  </p>
-                  <p className="mt-0.5 text-[11px] text-(--text-3)">{c.sub}</p>
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* Lembrete de tipo */}
           <div
             className="mb-5 flex items-center gap-2.25 rounded-xl p-[11px_14px]"
