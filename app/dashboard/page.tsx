@@ -410,7 +410,7 @@ export default function DashboardPage() {
                   <p className="mb-2 text-[10.5px] font-bold uppercase tracking-[.06em] text-(--text-3)">
                     ✓ Publicados ({publishedPosts.length})
                   </p>
-                  <GalleryGrid posts={publishedPosts} onRetry={handleRetry} />
+                  <GalleryGrid posts={publishedPosts.slice(0, 3)} onRetry={handleRetry} />
                 </div>
               )}
 
@@ -419,7 +419,7 @@ export default function DashboardPage() {
                   <p className="mb-2 text-[10.5px] font-bold uppercase tracking-[.06em] text-(--text-3)">
                     ⚠ Falharam ({failedPosts.length})
                   </p>
-                  <GalleryGrid posts={failedPosts} onRetry={handleRetry} />
+                  <GalleryGrid posts={failedPosts.slice(0, 3)} onRetry={handleRetry} />
                 </div>
               )}
             </section>
