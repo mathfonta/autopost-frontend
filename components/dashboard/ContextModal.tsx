@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Zap } from "lucide-react";
+import { Music, Zap } from "lucide-react";
 import { BottomSheet, SheetCloseButton } from "@/components/ui/BottomSheet";
 import { VoiceToneSelector } from "./VoiceToneSelector";
 import { POST_TYPE_MAP, type PostTypeId } from "@/lib/post-types";
@@ -19,6 +19,7 @@ interface ContextModalProps {
 }
 
 const MAX_CHARS = 200;
+const MAX_MUSIC_CHARS = 100;
 
 export function ContextModal({
   open,
@@ -31,16 +32,22 @@ export function ContextModal({
   onClose,
 }: ContextModalProps) {
   const [context, setContext] = useState("");
+  const [music, setMusic] = useState("");
   const pt = postTypeId ? POST_TYPE_MAP[postTypeId] : null;
 
   function handleConfirm() {
-    const trimmed = context.trim();
+    let full = context.trim();
+    if (music.trim()) {
+      full = [full, `Música de fundo: ${music.trim()}`].filter(Boolean).join("\n\n");
+    }
     setContext("");
-    onConfirm(trimmed);
+    setMusic("");
+    onConfirm(full);
   }
 
   function handleSkip() {
     setContext("");
+    setMusic("");
     onSkip();
   }
 
@@ -98,6 +105,32 @@ export function ContextModal({
           <p className="mt-1 text-right text-[11px] text-[var(--text-4)]">
             {context.length}/{MAX_CHARS}
           </p>
+        </div>
+
+        {/* Música de fundo */}
+        <div className="mb-6">
+          <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[.07em] text-[var(--text-3)]">
+            Música de fundo <span className="font-normal normal-case tracking-normal text-(--text-4)">(opcional)</span>
+          </p>
+          <div className="relative flex items-center gap-2 rounded-xl border-2 border-(--border) bg-(--bg-input) px-3 py-2.5 transition-colors focus-within:border-(--border)"
+            onFocus={(e) => { if (pt) (e.currentTarget as HTMLDivElement).style.borderColor = pt.color; }}
+            onBlur={(e)  => { (e.currentTarget as HTMLDivElement).style.borderColor = "var(--border)"; }}
+          >
+            <Music size={14} className="shrink-0 text-(--text-4)" />
+            <input
+              type="text"
+              value={music}
+              onChange={(e) => setMusic(e.target.value.slice(0, MAX_MUSIC_CHARS))}
+              placeholder="Ex: Gustavo Mioto — Não, Não Vou"
+              className="flex-1 bg-transparent text-[14px] text-(--text-1) outline-none placeholder:text-(--text-4)"
+              style={{ fontFamily: "inherit" }}
+            />
+          </div>
+          {music.length > 0 && (
+            <p className="mt-1 text-right text-[11px] text-(--text-4)">
+              {music.length}/{MAX_MUSIC_CHARS}
+            </p>
+          )}
         </div>
 
         <button
