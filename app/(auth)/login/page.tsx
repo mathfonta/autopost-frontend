@@ -41,16 +41,16 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-(--bg-page) px-4">
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-blue-600">AutoPost</h1>
-          <p className="text-gray-500 text-sm mt-1">Publique no Instagram automaticamente</p>
+          <p className="text-(--text-2) text-sm mt-1">Publique no Instagram automaticamente</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">Entrar na sua conta</h2>
+        <div className="bg-(--bg-card) rounded-2xl shadow-sm border border-(--border) p-6">
+          <h2 className="text-xl font-semibold text-(--text-1) mb-6">Entrar na sua conta</h2>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-1">
@@ -93,7 +93,7 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="mt-4 flex flex-col gap-2 text-center text-sm text-gray-500">
+          <div className="mt-4 flex flex-col gap-2 text-center text-sm text-(--text-2)">
             <p>
               Não tem conta?{" "}
               <Link href="/register" className="text-blue-600 font-medium hover:underline">
