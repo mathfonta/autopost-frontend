@@ -2,11 +2,21 @@ import Cookies from "js-cookie";
 import { api } from "./api";
 
 const COOKIE_NAME = "auth_token";
+const REFRESH_COOKIE_NAME = "refresh_token";
 const COOKIE_OPTIONS = {
   expires: 7,
   secure: process.env.NODE_ENV === "production",
   sameSite: "lax" as const,
 };
+
+export function setTokens(accessToken: string, refreshToken: string): void {
+  Cookies.set(COOKIE_NAME, accessToken, COOKIE_OPTIONS);
+  Cookies.set(REFRESH_COOKIE_NAME, refreshToken, COOKIE_OPTIONS);
+}
+
+export function getRefreshToken(): string | undefined {
+  return Cookies.get(REFRESH_COOKIE_NAME);
+}
 
 export interface User {
   id: string;
@@ -34,7 +44,7 @@ export async function login(payload: LoginPayload): Promise<User> {
     password: payload.password,
   });
 
-  Cookies.set(COOKIE_NAME, data.access_token, COOKIE_OPTIONS);
+  setTokens(data.access_token, data.refresh_token);
 
   const user = await getUser();
   return user;
@@ -52,6 +62,7 @@ export async function getUser(): Promise<User> {
 
 export function logout(): void {
   Cookies.remove(COOKIE_NAME);
+  Cookies.remove(REFRESH_COOKIE_NAME);
   if (typeof window !== "undefined") {
     window.location.href = "/login";
   }
