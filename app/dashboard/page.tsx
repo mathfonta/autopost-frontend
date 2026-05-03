@@ -17,6 +17,7 @@ import { GeneratingScreen } from "@/components/dashboard/GeneratingScreen";
 import { ApprovalScreen }   from "@/components/dashboard/ApprovalScreen";
 import { POST_TYPE_MAP } from "@/lib/post-types";
 import { api, getMetaStatus, retryContentRequest, type MetaStatus } from "@/lib/api";
+import { track } from "@/lib/analytics";
 import type { PostTypeId } from "@/lib/post-types";
 import type { ContentRequest, VoiceTone } from "@/lib/types";
 
@@ -130,6 +131,7 @@ export default function DashboardPage() {
       const { data } = await api.post<{ id: string }>("/content-requests", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
+      track("post_created", { content_type: intent, strategy: strategyId });
       cleanupPhoto();
       setGeneratingId(data.id);
       setScreen("generating");

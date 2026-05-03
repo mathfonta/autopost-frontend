@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { RejectModal } from "./RejectModal";
 import { approveContentRequest, rejectContentRequest, retryContentRequest } from "@/lib/api";
 import { useToast } from "@/components/ui/toast";
+import { track } from "@/lib/analytics";
 
 const RETRY_MAX = 3;
 
@@ -31,6 +32,7 @@ export function ApprovalButtons({ postId, retryCount, onAction, captionOverride 
     setApproving(true);
     try {
       await approveContentRequest(postId);
+      track("post_approved", { post_id: postId });
       toast("Post aprovado! Publicando no Instagram...");
       onAction();
     } catch {

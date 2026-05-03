@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ToastProvider } from "@/components/ui/toast";
 import { ServiceWorkerRegistrar } from "@/components/pwa/ServiceWorkerRegistrar";
+import { PosthogProvider } from "@/components/providers/PosthogProvider";
 
 const jakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
@@ -32,10 +33,12 @@ export default function RootLayout({
       <body className="min-h-full bg-gray-50">
         <div className="mx-auto flex min-h-full w-full max-w-107.5 flex-col">
           <AuthProvider>
-            <ToastProvider>
-              <ServiceWorkerRegistrar />
-              {children}
-            </ToastProvider>
+            <PosthogProvider>
+              <ToastProvider>
+                <ServiceWorkerRegistrar />
+                {children}
+              </ToastProvider>
+            </PosthogProvider>
           </AuthProvider>
         </div>
       </body>
