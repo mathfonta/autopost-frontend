@@ -1,26 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Music, Zap } from "lucide-react";
+import { Zap } from "lucide-react";
 import { BottomSheet, SheetCloseButton } from "@/components/ui/BottomSheet";
 import { VoiceToneSelector } from "./VoiceToneSelector";
 import { POST_TYPE_MAP, type PostTypeId } from "@/lib/post-types";
 import type { VoiceTone } from "@/lib/types";
-
-const MUSIC_SUGGESTIONS = [
-  "Gusttavo Lima — Embaixador",
-  "Luan Santana — Tudo Que Você Quiser",
-  "Jorge & Mateus — Com Você",
-  "Marília Mendonça — Todo Mundo Vai Sofrer",
-  "Chitãozinho & Xororó — Evidências",
-  "Ana Castela — Boiadeira",
-  "Zé Neto & Cristiano — Largado às Traças",
-  "Menos É Mais — Propaganda",
-  "Pedro Sampaio — Galopa",
-  "Anitta — Envolver",
-  "Lo-fi Hip Hop — Instrumental",
-  "Piano Instrumental — Ambiente",
-];
 
 interface ContextModalProps {
   open:            boolean;
@@ -34,7 +19,6 @@ interface ContextModalProps {
 }
 
 const MAX_CHARS = 200;
-const MAX_MUSIC_CHARS = 100;
 
 export function ContextModal({
   open,
@@ -47,31 +31,18 @@ export function ContextModal({
   onClose,
 }: ContextModalProps) {
   const [context, setContext] = useState("");
-  const [music, setMusic] = useState("");
-  const [showSuggestions, setShowSuggestions] = useState(false);
   const pt = postTypeId ? POST_TYPE_MAP[postTypeId] : null;
 
   function handleConfirm() {
-    let full = context.trim();
-    if (music.trim()) {
-      full = [full, `Música de fundo: ${music.trim()}`].filter(Boolean).join("\n\n");
-    }
+    const full = context.trim();
     setContext("");
-    setMusic("");
-    setShowSuggestions(false);
     onConfirm(full);
   }
 
   function handleSkip() {
     setContext("");
-    setMusic("");
-    setShowSuggestions(false);
     onSkip();
   }
-
-  const filteredSuggestions = music.trim()
-    ? MUSIC_SUGGESTIONS.filter(s => s.toLowerCase().includes(music.toLowerCase()))
-    : MUSIC_SUGGESTIONS;
 
   return (
     <BottomSheet open={open} onClose={onClose}>
@@ -127,60 +98,6 @@ export function ContextModal({
           <p className="mt-1 text-right text-[11px] text-[var(--text-4)]">
             {context.length}/{MAX_CHARS}
           </p>
-        </div>
-
-        {/* Música de fundo */}
-        <div className="mb-6">
-          <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[.07em] text-[var(--text-3)]">
-            Música de fundo <span className="font-normal normal-case tracking-normal text-(--text-4)">(opcional)</span>
-          </p>
-          <div
-            className="relative flex items-center gap-2 rounded-xl border-2 border-(--border) bg-(--bg-input) px-3 py-2.5 transition-colors"
-            onFocus={(e) => { if (pt) (e.currentTarget as HTMLDivElement).style.borderColor = pt.color; }}
-            onBlur={(e)  => { (e.currentTarget as HTMLDivElement).style.borderColor = "var(--border)"; }}
-          >
-            <Music size={14} className="shrink-0 text-(--text-4)" />
-            <input
-              type="text"
-              value={music}
-              onChange={(e) => { setMusic(e.target.value.slice(0, MAX_MUSIC_CHARS)); setShowSuggestions(true); }}
-              onFocus={() => setShowSuggestions(true)}
-              onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
-              placeholder="Digite ou escolha uma sugestão abaixo"
-              className="flex-1 bg-transparent text-[14px] text-(--text-1) outline-none placeholder:text-(--text-4)"
-              style={{ fontFamily: "inherit" }}
-            />
-            {music.length > 0 && (
-              <button
-                onClick={() => { setMusic(""); setShowSuggestions(true); }}
-                className="shrink-0 text-[18px] leading-none text-(--text-4) hover:text-(--text-2)"
-              >
-                ×
-              </button>
-            )}
-          </div>
-
-          {/* Sugestões */}
-          {showSuggestions && filteredSuggestions.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-2">
-              {filteredSuggestions.map((s) => (
-                <button
-                  key={s}
-                  onMouseDown={() => { setMusic(s); setShowSuggestions(false); }}
-                  className="rounded-full border border-(--border) bg-(--bg-input) px-3 py-1 text-[12px] font-medium text-(--text-2) transition-colors active:opacity-70"
-                  style={music === s ? { borderColor: pt?.color, color: pt?.color } : {}}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {music.length > 0 && !showSuggestions && (
-            <p className="mt-1 text-right text-[11px] text-(--text-4)">
-              {music.length}/{MAX_MUSIC_CHARS}
-            </p>
-          )}
         </div>
 
         <button
