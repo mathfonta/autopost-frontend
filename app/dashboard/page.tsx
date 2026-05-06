@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Camera, LogOut, History, Zap, RefreshCw } from "lucide-react";
+import { Camera, LogOut, History, Zap, RefreshCw, Play } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useContentRequests } from "@/hooks/useContentRequests";
 import { PostCard } from "@/components/dashboard/PostCard";
@@ -454,19 +454,28 @@ function GalleryGrid({
   posts: ContentRequest[];
   onRetry: (post: ContentRequest) => void;
 }) {
+  const router = useRouter();
+
   return (
     <div className="grid grid-cols-3 gap-2">
       {posts.map((post) => {
-        const imageUrl = post.design_result?.processed_photo_url ?? post.photo_url;
+        const isVideo  = post.content_type === "reels" || post.content_type === "story";
+        const imageUrl = isVideo ? null : (post.design_result?.processed_photo_url ?? post.photo_url);
         const pub      = post.status === "published";
         const pt       = post.content_type ? POST_TYPE_MAP[post.content_type as PostTypeId] : null;
 
         return (
           <div
             key={post.id}
-            className="relative aspect-square overflow-hidden rounded-[12px] bg-(--bg-card) shadow-sm"
+            className="relative aspect-square overflow-hidden rounded-[12px] bg-(--bg-card) shadow-sm cursor-pointer"
+            onClick={() => router.push(`/posts/${post.id}`)}
           >
-            {imageUrl ? (
+            {isVideo ? (
+              <div className="flex h-full w-full flex-col items-center justify-center gap-1 bg-gray-900">
+                <Play className="h-7 w-7 text-white opacity-80" fill="white" />
+                {pt && <span className="text-[8px] font-bold text-gray-400 capitalize">{pt.label}</span>}
+              </div>
+            ) : imageUrl ? (
               <img src={imageUrl} alt="" className="block h-full w-full object-cover" />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-[9px] font-semibold text-(--text-4)">

@@ -113,10 +113,12 @@ export default function PostPreviewPage() {
             )}
 
             {/* Mensagem de erro técnico */}
-            {post.status === "failed" && post.error_message && (
+            {post.status === "failed" && (
               <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
                 <p className="text-sm font-semibold text-red-700 mb-1">Motivo da falha</p>
-                <p className="text-sm text-red-600">{post.error_message}</p>
+                <p className="text-sm text-red-600">
+                  {post.error_message ?? "Ocorreu um erro durante o processamento. Tente postar novamente."}
+                </p>
               </div>
             )}
 
