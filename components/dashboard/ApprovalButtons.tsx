@@ -33,6 +33,7 @@ export function ApprovalButtons({ postId, retryCount, onAction, captionOverride 
     try {
       await approveContentRequest(postId);
       track("post_approved", { post_id: postId });
+      track("post_published", { post_id: postId });
       toast("Post aprovado! Publicando no Instagram...");
       onAction();
     } catch {
@@ -46,6 +47,7 @@ export function ApprovalButtons({ postId, retryCount, onAction, captionOverride 
     setRejecting(true);
     try {
       await rejectContentRequest(postId, reason);
+      track("post_rejected", { post_id: postId, reason });
       toast("Post rejeitado.");
       setShowReject(false);
       onAction();
