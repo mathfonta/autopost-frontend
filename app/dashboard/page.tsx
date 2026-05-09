@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Camera, LogOut, History, Zap, RefreshCw, Play } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useContentRequests } from "@/hooks/useContentRequests";
@@ -36,6 +36,7 @@ export default function DashboardPage() {
   const { user, logout, refresh: refreshUser } = useAuth();
   const router = useRouter();
   const { posts, error, loading, refresh } = useContentRequests();
+
   const [metaStatus, setMetaStatus] = useState<MetaStatus | null>(null);
 
   const [screen,        setScreen]        = useState<Screen>("dashboard");
@@ -55,6 +56,12 @@ export default function DashboardPage() {
   useEffect(() => {
     getMetaStatus().then(setMetaStatus).catch(() => null);
   }, []);
+
+  function handleNewPostAction() {
+    setPostTypeId("feed_photo");
+    setScreen("upload");
+    router.replace("/dashboard");
+  }
 
   function handleTypeSelected(id: PostTypeId) {
     setPostTypeId(id);
@@ -287,6 +294,9 @@ export default function DashboardPage() {
   // ── Dashboard principal ───────────────────────────────────────────────────
   return (
     <>
+      <Suspense fallback={null}>
+        <NewPostTrigger onNewPost={handleNewPostAction} />
+      </Suspense>
       <div className="flex min-h-screen flex-col bg-(--bg-shell)">
         {/* Header */}
         <header className="sticky top-0 z-10 flex h-13.5 shrink-0 items-center justify-between border-b border-(--border) bg-(--bg-card) px-5">
@@ -539,4 +549,19 @@ function GalleryGrid({
       })}
     </div>
   );
+}
+
+/* ── NewPostTrigger — detecta ?action=new-post e abre o upload automaticamente ── */
+function NewPostTrigger({ onNewPost }: { onNewPost: () => void }) {
+  const searchParams = useSearchParams();
+  const fired = useRef(false);
+
+  useEffect(() => {
+    if (!fired.current && searchParams.get("action") === "new-post") {
+      fired.current = true;
+      onNewPost();
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return null;
 }

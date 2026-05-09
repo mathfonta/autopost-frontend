@@ -71,10 +71,16 @@ export function StepComplete() {
       </div>
 
       <button
-        onClick={() => router.push("/dashboard")}
+        onClick={() => router.push("/dashboard?action=new-post")}
         className="w-full py-3 bg-blue-600 text-white rounded-2xl font-semibold text-sm hover:bg-blue-700 transition-colors"
       >
-        Ir para o Dashboard
+        Criar meu primeiro post →
+      </button>
+      <button
+        onClick={() => router.push("/dashboard")}
+        className="w-full py-2 text-sm text-gray-400 hover:text-gray-600 transition-colors"
+      >
+        Explorar o dashboard primeiro
       </button>
     </div>
   );
