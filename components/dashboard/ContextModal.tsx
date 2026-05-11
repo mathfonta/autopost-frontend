@@ -18,7 +18,7 @@ interface ContextModalProps {
   onClose:         () => void;
 }
 
-const MAX_CHARS = 200;
+const MAX_CHARS = 500;
 
 export function ContextModal({
   open,
@@ -86,8 +86,8 @@ export function ContextModal({
             <textarea
               value={context}
               onChange={(e) => setContext(e.target.value.slice(0, MAX_CHARS))}
-              placeholder="Ex: revestimento em porcelanato, banheiro social..."
-              rows={3}
+              placeholder="Ex: porta de correr instalada — cliente trouxe o trilho mas a porta não servia, adaptamos uma porta de cozinha e cortamos na medida..."
+              rows={5}
               className="w-full resize-none rounded-[12px] border-2 border-[var(--border)] bg-[var(--bg-input)] p-[12px_14px] text-[14px] leading-relaxed text-[var(--text-1)] outline-none transition-colors placeholder:text-[var(--text-4)] focus:border-[var(--border)]"
               style={{ fontFamily: "inherit" }}
               onFocus={(e) => pt && (e.target.style.borderColor = pt.color)}
