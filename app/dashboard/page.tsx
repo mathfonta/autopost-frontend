@@ -50,8 +50,9 @@ export default function DashboardPage() {
   const [uploading,     setUploading]     = useState(false);
   const [uploadingType, setUploadingType] = useState<PostTypeId | null>(null);
   const [uploadError,   setUploadError]   = useState<string | null>(null);
-  const [generatingId,  setGeneratingId]  = useState<string | null>(null);
-  const [approvalPost,  setApprovalPost]  = useState<ContentRequest | null>(null);
+  const [generatingId,          setGeneratingId]          = useState<string | null>(null);
+  const [generatingContentType, setGeneratingContentType] = useState<string | null>(null);
+  const [approvalPost,          setApprovalPost]          = useState<ContentRequest | null>(null);
 
   useEffect(() => {
     getMetaStatus().then(setMetaStatus).catch(() => null);
@@ -141,6 +142,7 @@ export default function DashboardPage() {
       track("post_created", { content_type: intent, strategy: strategyId });
       cleanupPhoto();
       setGeneratingId(data.id);
+      setGeneratingContentType(intent);
       setScreen("generating");
     } catch {
       setUploadError("Erro ao enviar. Tente novamente.");
@@ -260,6 +262,7 @@ export default function DashboardPage() {
     return (
       <GeneratingScreen
         requestId={generatingId}
+        contentType={generatingContentType ?? undefined}
         onDone={handleGeneratingDone}
         onError={handleGeneratingError}
         onCancel={handleGeneratingCancel}

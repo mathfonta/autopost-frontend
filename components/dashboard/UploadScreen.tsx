@@ -39,8 +39,10 @@ export function UploadScreen({
   const [thumbUrls,    setThumbUrls]    = useState<string[]>([]);
 
   // video / image-or-video preview state
-  const [previewFile, setPreviewFile] = useState<File | null>(null);
-  const [previewUrl,  setPreviewUrl]  = useState<string | null>(null);
+  const [previewFile,    setPreviewFile]    = useState<File | null>(null);
+  const [previewUrl,     setPreviewUrl]     = useState<string | null>(null);
+  const [videoSizeMB,    setVideoSizeMB]    = useState<number | null>(null);
+  const [tipsExpanded,   setTipsExpanded]   = useState(false);
 
   // revoke all blob URLs on unmount
   const thumbUrlsRef  = useRef(thumbUrls);
@@ -94,6 +96,11 @@ export function UploadScreen({
     const url = URL.createObjectURL(file);
     setPreviewFile(file);
     setPreviewUrl(url);
+    if (file.type.startsWith("video/")) {
+      setVideoSizeMB(Math.round(file.size / (1024 * 1024)));
+    } else {
+      setVideoSizeMB(null);
+    }
     e.target.value = "";
   }
 
@@ -318,6 +325,13 @@ export function UploadScreen({
                   </div>
                 </div>
 
+                {videoSizeMB !== null && videoSizeMB > 20 && (
+                  <div className="mb-3 flex items-center gap-2 rounded-xl bg-blue-50 px-3 py-2.5 text-[12px] font-medium text-blue-700">
+                    <span>📹</span>
+                    <span>Vídeo grande detectado ({videoSizeMB}MB) — o AutoPost comprime automaticamente</span>
+                  </div>
+                )}
+
                 <button
                   className="tap flex w-full items-center justify-center gap-2 rounded-[14px] py-4 text-[16px] font-extrabold text-white"
                   style={{ background: pt.color }}
@@ -334,22 +348,55 @@ export function UploadScreen({
                 </button>
               </>
             ) : (
-              <button
-                className="tap flex w-full items-center gap-4 rounded-2xl border-none px-5 py-4.5 text-left shadow-sm"
-                style={{ background: pt.color }}
-                onClick={() => videoRef.current?.click()}
-              >
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/20">
-                  <Play size={22} fill="white" color="white" />
+              <>
+                <div className="mb-4 overflow-hidden rounded-2xl border border-(--border) bg-(--bg-card)">
+                  <button
+                    className="flex w-full items-center justify-between px-4 py-3.5 text-left"
+                    onClick={() => setTipsExpanded(e => !e)}
+                  >
+                    <span className="text-[14px] font-bold text-(--text-1)">📱 Dicas para gravar vídeos melhores</span>
+                    <svg
+                      width="16" height="16" viewBox="0 0 24 24" fill="none"
+                      stroke="var(--text-3)" strokeWidth="2.5" strokeLinecap="round"
+                      className={`shrink-0 transition-transform ${tipsExpanded ? "rotate-180" : ""}`}
+                    >
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </button>
+                  {tipsExpanded && (
+                    <div className="space-y-3 border-t border-(--border) px-4 pb-4 pt-3">
+                      <div>
+                        <p className="mb-0.5 text-[12.5px] font-bold text-(--text-1)">Configuração da câmera</p>
+                        <p className="text-[12px] leading-relaxed text-(--text-3)">Grave em 1080p — o Instagram não usa resolução acima disso. Evite 4K. Verifique nas configurações da câmera do seu celular.</p>
+                      </div>
+                      <div>
+                        <p className="mb-0.5 text-[12.5px] font-bold text-(--text-1)">Na hora de gravar</p>
+                        <p className="text-[12px] leading-relaxed text-(--text-3)">15–45 segundos é o ideal. Boa iluminação natural = arquivo menor e vídeo mais bonito. Segure firme — vídeo tremido aumenta o tamanho do arquivo.</p>
+                      </div>
+                      <div>
+                        <p className="mb-0.5 text-[12.5px] font-bold text-(--text-1)">Se ficou grande mesmo assim</p>
+                        <p className="text-[12px] leading-relaxed text-(--text-3)">O AutoPost comprime automaticamente — é só enviar normalmente.</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div className="flex-1">
-                  <p className="text-[16px] font-extrabold leading-none text-white">Escolher vídeo</p>
-                  <p className="mt-1 text-[12px] font-medium text-white/70">MP4 ou MOV · até 20MB</p>
-                </div>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.5)" strokeWidth="2.5" strokeLinecap="round">
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
-              </button>
+                <button
+                  className="tap flex w-full items-center gap-4 rounded-2xl border-none px-5 py-4.5 text-left shadow-sm"
+                  style={{ background: pt.color }}
+                  onClick={() => videoRef.current?.click()}
+                >
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/20">
+                    <Play size={22} fill="white" color="white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-[16px] font-extrabold leading-none text-white">Escolher vídeo</p>
+                    <p className="mt-1 text-[12px] font-medium text-white/70">MP4 ou MOV</p>
+                  </div>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.5)" strokeWidth="2.5" strokeLinecap="round">
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
+                </button>
+              </>
             )}
 
             <input
@@ -390,6 +437,13 @@ export function UploadScreen({
                   )}
                 </div>
 
+                {videoSizeMB !== null && videoSizeMB > 20 && (
+                  <div className="mb-3 flex items-center gap-2 rounded-xl bg-blue-50 px-3 py-2.5 text-[12px] font-medium text-blue-700">
+                    <span>📹</span>
+                    <span>Vídeo grande detectado ({videoSizeMB}MB) — o AutoPost comprime automaticamente</span>
+                  </div>
+                )}
+
                 <button
                   className="tap flex w-full items-center justify-center gap-2 rounded-[14px] py-4 text-[16px] font-extrabold text-white"
                   style={{ background: pt.color }}
@@ -406,26 +460,59 @@ export function UploadScreen({
                 </button>
               </>
             ) : (
-              <button
-                className="tap flex w-full items-center gap-4 rounded-2xl border-none px-5 py-4.5 text-left shadow-sm"
-                style={{ background: pt.color }}
-                onClick={() => anyFileRef.current?.click()}
-              >
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/20">
-                  <FileUp size={22} color="white" />
+              <>
+                <div className="mb-4 overflow-hidden rounded-2xl border border-(--border) bg-(--bg-card)">
+                  <button
+                    className="flex w-full items-center justify-between px-4 py-3.5 text-left"
+                    onClick={() => setTipsExpanded(e => !e)}
+                  >
+                    <span className="text-[14px] font-bold text-(--text-1)">📱 Dicas para gravar vídeos melhores</span>
+                    <svg
+                      width="16" height="16" viewBox="0 0 24 24" fill="none"
+                      stroke="var(--text-3)" strokeWidth="2.5" strokeLinecap="round"
+                      className={`shrink-0 transition-transform ${tipsExpanded ? "rotate-180" : ""}`}
+                    >
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </button>
+                  {tipsExpanded && (
+                    <div className="space-y-3 border-t border-(--border) px-4 pb-4 pt-3">
+                      <div>
+                        <p className="mb-0.5 text-[12.5px] font-bold text-(--text-1)">Configuração da câmera</p>
+                        <p className="text-[12px] leading-relaxed text-(--text-3)">Grave em 1080p — o Instagram não usa resolução acima disso. Evite 4K. Verifique nas configurações da câmera do seu celular.</p>
+                      </div>
+                      <div>
+                        <p className="mb-0.5 text-[12.5px] font-bold text-(--text-1)">Na hora de gravar</p>
+                        <p className="text-[12px] leading-relaxed text-(--text-3)">15–45 segundos é o ideal. Boa iluminação natural = arquivo menor e vídeo mais bonito. Segure firme — vídeo tremido aumenta o tamanho do arquivo.</p>
+                      </div>
+                      <div>
+                        <p className="mb-0.5 text-[12.5px] font-bold text-(--text-1)">Se ficou grande mesmo assim</p>
+                        <p className="text-[12px] leading-relaxed text-(--text-3)">O AutoPost comprime automaticamente — é só enviar normalmente.</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div className="flex-1">
-                  <p className="text-[16px] font-extrabold leading-none text-white">
-                    Escolher foto ou vídeo
-                  </p>
-                  <p className="mt-1 text-[12px] font-medium text-white/70">
-                    JPEG, PNG, WEBP, MP4, MOV
-                  </p>
-                </div>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.5)" strokeWidth="2.5" strokeLinecap="round">
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
-              </button>
+                <button
+                  className="tap flex w-full items-center gap-4 rounded-2xl border-none px-5 py-4.5 text-left shadow-sm"
+                  style={{ background: pt.color }}
+                  onClick={() => anyFileRef.current?.click()}
+                >
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/20">
+                    <FileUp size={22} color="white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-[16px] font-extrabold leading-none text-white">
+                      Escolher foto ou vídeo
+                    </p>
+                    <p className="mt-1 text-[12px] font-medium text-white/70">
+                      JPEG, PNG, WEBP, MP4, MOV
+                    </p>
+                  </div>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.5)" strokeWidth="2.5" strokeLinecap="round">
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
+                </button>
+              </>
             )}
 
             <input
@@ -443,9 +530,9 @@ export function UploadScreen({
           <span className="shrink-0 text-base">💡</span>
           <p className="text-[12.5px] font-medium leading-relaxed text-(--text-2)">
             {mode === "video"
-              ? "Vídeos curtos (15–30s) têm mais distribuição orgânica no Instagram. Tamanho máximo: 20MB."
+              ? "Vídeos curtos (15–30s) têm mais distribuição orgânica no Instagram."
               : mode === "image-or-video"
-                ? "Stories com vídeo têm mais cliques no link. Imagens ou vídeos até 20MB."
+                ? "Stories com vídeo têm mais cliques no link."
                 : mode === "multi-image"
                   ? "Carrosséis têm a maior taxa de saves e compartilhamentos do feed."
                   : "Fotos bem iluminadas geram copies melhores. Prefira fotos tiradas de dia ou com boa iluminação."}

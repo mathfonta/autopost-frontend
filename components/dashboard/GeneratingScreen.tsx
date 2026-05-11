@@ -16,13 +16,15 @@ const STAGES = [
 const STATUS_ORDER = ["pending", "analyzing", "copy", "design", "awaiting_approval", "failed"];
 
 interface GeneratingScreenProps {
-  requestId: string;
-  onDone:    (post: ContentRequest) => void;
-  onError:   () => void;
-  onCancel:  () => void;
+  requestId:    string;
+  contentType?: string;
+  onDone:       (post: ContentRequest) => void;
+  onError:      () => void;
+  onCancel:     () => void;
 }
 
-export function GeneratingScreen({ requestId, onDone, onError, onCancel }: GeneratingScreenProps) {
+export function GeneratingScreen({ requestId, contentType, onDone, onError, onCancel }: GeneratingScreenProps) {
+  const isVideoType = contentType === "reels" || contentType === "story";
   const [status,   setStatus]   = useState<string>("pending");
   const [elapsed,  setElapsed]  = useState(0);
   const [donePost, setDonePost] = useState<ContentRequest | null>(null);
@@ -101,7 +103,8 @@ export function GeneratingScreen({ requestId, onDone, onError, onCancel }: Gener
 
           {/* Todas as etapas concluídas */}
           <div className="w-full max-w-xs space-y-4">
-            <StageRow state="done" label="Foto enviada" />
+            <StageRow state="done" label={isVideoType ? "Vídeo enviado" : "Foto enviada"} />
+            {isVideoType && <StageRow state="done" label="Comprimindo vídeo" />}
             {STAGES.map(({ status: s, label }) => (
               <StageRow key={s} state="done" label={label} />
             ))}
@@ -163,7 +166,10 @@ export function GeneratingScreen({ requestId, onDone, onError, onCancel }: Gener
         {/* Etapas */}
         <div className="w-full max-w-xs space-y-4">
           {/* Upload — sempre concluído quando chegamos aqui */}
-          <StageRow state="done"  label="Foto enviada" />
+          <StageRow state="done" label={isVideoType ? "Vídeo enviado" : "Foto enviada"} />
+
+          {/* Compressão — só para vídeos, já concluída no momento do upload */}
+          {isVideoType && <StageRow state="done" label="Comprimindo vídeo" />}
 
           {STAGES.map(({ status: s, label }) => (
             <StageRow key={s} state={stageState(s)} label={label} />
