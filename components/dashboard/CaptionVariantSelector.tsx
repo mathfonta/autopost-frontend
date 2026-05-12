@@ -70,7 +70,7 @@ export function CaptionVariantSelector({ post, onVariantSelected }: Props) {
         ))}
       </div>
       {/* Preview da variação ativa */}
-      <p className="text-sm text-gray-700 leading-snug">{preview}</p>
+      <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{preview}</p>
     </div>
   );
 }
