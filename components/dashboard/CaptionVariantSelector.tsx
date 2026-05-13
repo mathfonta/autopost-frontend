@@ -17,6 +17,12 @@ interface Props {
   onVariantSelected: (caption: string, selected: Variant) => void;
 }
 
+function buildFullCaption(text: string, hashtags: string[] | null | undefined): string {
+  if (!hashtags || hashtags.length === 0) return text;
+  const hashtagBlock = hashtags.map((h) => (h.startsWith("#") ? h : `#${h}`)).join(" ");
+  return `${text}\n\n${hashtagBlock}`;
+}
+
 export function CaptionVariantSelector({ post, onVariantSelected }: Props) {
   const [active, setActive] = useState<Variant>(post.caption_selected || "long");
   const [saving, setSaving] = useState(false);
@@ -34,13 +40,15 @@ export function CaptionVariantSelector({ post, onVariantSelected }: Props) {
 
   if (tabs.length <= 1) return null;
 
+  const hashtags = post.copy_result?.hashtags;
+
   async function handleSelect(tab: Tab) {
     if (tab.key === active || saving || !tab.text) return;
     setSaving(true);
     try {
       await selectCaptionVariant(post.id, tab.key, tab.text);
       setActive(tab.key);
-      onVariantSelected(tab.text, tab.key);
+      onVariantSelected(buildFullCaption(tab.text, hashtags), tab.key);
     } catch {
       // falha silenciosa — seleção reverte
     } finally {
@@ -48,7 +56,8 @@ export function CaptionVariantSelector({ post, onVariantSelected }: Props) {
     }
   }
 
-  const preview = tabs.find((t) => t.key === active)?.text ?? "";
+  const rawPreview = tabs.find((t) => t.key === active)?.text ?? "";
+  const preview = buildFullCaption(rawPreview, hashtags);
 
   return (
     <div className="mb-2">

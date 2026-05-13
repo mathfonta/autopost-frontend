@@ -25,8 +25,16 @@ export function ApprovalScreen({ post, onBack, onAction }: ApprovalScreenProps) 
   const isVideo = VIDEO_TYPES.has(post.content_type ?? "");
   const pt      = post.content_type ? POST_TYPE_MAP[post.content_type as PostTypeId] : null;
 
+  // Monta caption completo com hashtags no final
+  function withHashtags(text: string): string {
+    const tags = post.copy_result?.hashtags;
+    if (!tags || tags.length === 0) return text;
+    const block = tags.map((h) => (h.startsWith("#") ? h : `#${h}`)).join(" ");
+    return `${text}\n\n${block}`;
+  }
+
   // Caption state — começa com a variante longa (ou o caption do copy_result)
-  const defaultCaption = post.caption_long ?? post.copy_result?.caption ?? "";
+  const defaultCaption = withHashtags(post.caption_long ?? post.copy_result?.caption ?? "");
   const [activeCaption, setActiveCaption] = useState(defaultCaption);
   const [editing,       setEditing]       = useState(false);
   const [draft,         setDraft]         = useState(defaultCaption);

@@ -219,7 +219,7 @@ export default function DashboardPage() {
   }
 
   const pendingPosts   = posts.filter((p) => p.status === "awaiting_approval");
-  const publishedPosts = posts.filter((p) => p.status === "published");
+  const publishedPosts = posts.filter((p) => p.status === "published" || p.status === "approved");
   const failedPosts    = posts.filter((p) => p.status === "failed");
 
   // ── Tela de Aprovação ────────────────────────────────────────────────────
