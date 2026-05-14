@@ -125,6 +125,22 @@ export async function deleteContentRequest(id: string): Promise<void> {
   await api.delete(`/content-requests/${id}`);
 }
 
+// ─── Insights (Story 13.4) ───────────────────────────────────────
+
+export interface WeeklyInsight {
+  id: string;
+  week_of: string;       // ISO date "YYYY-MM-DD"
+  segment: string;
+  summary: string | null;
+  hashtags: string[] | null;
+  created_at: string;
+}
+
+export async function getWeeklyInsight(): Promise<WeeklyInsight> {
+  const { data } = await api.get<WeeklyInsight>("/insights/weekly");
+  return data;
+}
+
 // ─── 401 → refresh automático ───────────────────────────────────
 
 let isRefreshing = false;
@@ -185,17 +201,4 @@ api.interceptors.response.use(
       const { data } = await axios.post(`${API_URL}/auth/refresh`, { refresh_token: refreshToken });
       const newToken: string = data.access_token;
       Cookies.set("auth_token", newToken, { expires: 7, secure: process.env.NODE_ENV === "production", sameSite: "lax" });
-      Cookies.set("refresh_token", data.refresh_token, { expires: 7, secure: process.env.NODE_ENV === "production", sameSite: "lax" });
-      api.defaults.headers.common.Authorization = `Bearer ${newToken}`;
-      processQueue(null, newToken);
-      originalRequest.headers.Authorization = `Bearer ${newToken}`;
-      return api(originalRequest);
-    } catch (refreshErr) {
-      processQueue(refreshErr, null);
-      clearAuthAndRedirect();
-      return Promise.reject(refreshErr);
-    } finally {
-      isRefreshing = false;
-    }
-  }
-);
+      Cookies.set("refresh_token", d

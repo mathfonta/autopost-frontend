@@ -8,6 +8,7 @@ import { useContentRequests } from "@/hooks/useContentRequests";
 import { PostCard } from "@/components/dashboard/PostCard";
 import { ContentTypeBar } from "@/components/dashboard/ContentTypeBar";
 import { StreakBar } from "@/components/dashboard/StreakBar";
+import { WeeklyInsightCard } from "@/components/dashboard/WeeklyInsightCard";
 import { UploadScreen } from "@/components/dashboard/UploadScreen";
 import { PhotoPreview } from "@/components/dashboard/PhotoPreview";
 import { ContextModal } from "@/components/dashboard/ContextModal";
@@ -339,6 +340,9 @@ export default function DashboardPage() {
           {/* Streak semanal */}
           <StreakBar data={STREAK_MOCK} />
 
+          {/* Inteligência de mercado semanal (Exa Search) */}
+          <WeeklyInsightCard />
+
           {/* Seletor de tipo de conteúdo */}
           <ContentTypeBar
             onTypeSelected={handleTypeSelected}
@@ -560,11 +564,4 @@ function NewPostTrigger({ onNewPost }: { onNewPost: () => void }) {
   const fired = useRef(false);
 
   useEffect(() => {
-    if (!fired.current && searchParams.get("action") === "new-post") {
-      fired.current = true;
-      onNewPost();
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  return null;
-}
+    if (!fired.current && se
