@@ -564,4 +564,11 @@ function NewPostTrigger({ onNewPost }: { onNewPost: () => void }) {
   const fired = useRef(false);
 
   useEffect(() => {
-    if (!fired.current && se
+    if (!fired.current && searchParams.get("action") === "new-post") {
+      fired.current = true;
+      onNewPost();
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return null;
+}
