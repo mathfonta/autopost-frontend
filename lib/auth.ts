@@ -24,6 +24,7 @@ export interface User {
   name?: string;
   company_name?: string;
   voice_tone?: "formal" | "casual" | "technical" | null;
+  attack_sequence_position?: number;
 }
 
 export interface LoginPayload {

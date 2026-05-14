@@ -343,6 +343,9 @@ export default function DashboardPage() {
           {/* Inteligência de mercado semanal (Exa Search) */}
           <WeeklyInsightCard />
 
+          {/* Plano de Ataque — sequência editorial para clientes novos (Story 14.2) */}
+          <AttackSequenceCard position={user?.attack_sequence_position ?? 0} />
+
           {/* Seletor de tipo de conteúdo */}
           <ContentTypeBar
             onTypeSelected={handleTypeSelected}
@@ -571,4 +574,56 @@ function NewPostTrigger({ onNewPost }: { onNewPost: () => void }) {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return null;
+}
+
+/* ── AttackSequenceCard — sequência de ataque editorial para clientes novos (Story 14.2) ── */
+const ATTACK_GOALS: Record<number, string> = {
+  0: "Retenção — teste inicial",
+  1: "Salvamentos",
+  2: "Comentários e shares",
+  3: "Qualificação de audiência",
+  4: "Replays + permanência",
+};
+
+function AttackSequenceCard({ position }: { position: number }) {
+  if (position >= 10) return null;
+
+  const postNum = position + 1;
+  const goal = ATTACK_GOALS[position] ?? "Consolidação";
+  const pct = Math.round((position / 10) * 100);
+
+  return (
+    <div
+      className="rounded-xl p-4"
+      style={{ background: "var(--bg-card)" }}
+    >
+      <div className="mb-3 flex items-center justify-between">
+        <span
+          className="text-xs font-semibold uppercase tracking-wide"
+          style={{ color: ACCENT }}
+        >
+          Plano de Ataque
+        </span>
+        <span className="text-xs text-(--text-4)">{position}/10 posts</span>
+      </div>
+
+      <p className="mb-1 text-sm font-semibold text-(--text-1)">
+        Post {postNum}/10
+      </p>
+      <p className="mb-3 text-xs text-(--text-3)">
+        Objetivo:{" "}
+        <span className="font-medium text-(--text-2)">{goal}</span>
+      </p>
+
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-(--bg-3)">
+        <div
+          className="h-full rounded-full transition-all duration-500"
+          style={{ width: `${pct}%`, background: ACCENT }}
+        />
+      </div>
+      <p className="mt-1 text-right text-[10px] text-(--text-4)">
+        {pct}% concluído
+      </p>
+    </div>
+  );
 }
