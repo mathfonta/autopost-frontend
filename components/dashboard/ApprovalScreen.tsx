@@ -33,11 +33,13 @@ export function ApprovalScreen({ post, onBack, onAction }: ApprovalScreenProps) 
     return `${text}\n\n${block}`;
   }
 
-  // Caption state — começa com a variante longa (ou o caption do copy_result)
-  const defaultCaption = withHashtags(post.caption_long ?? post.copy_result?.caption ?? "");
+  // Caption state — activeCaption inclui hashtags (display); rawCaption é só o texto (edição/backend)
+  const defaultRaw     = post.caption_long ?? post.copy_result?.caption ?? "";
+  const defaultCaption = withHashtags(defaultRaw);
   const [activeCaption, setActiveCaption] = useState(defaultCaption);
+  const [rawCaption,    setRawCaption]    = useState(defaultRaw);
   const [editing,       setEditing]       = useState(false);
-  const [draft,         setDraft]         = useState(defaultCaption);
+  const [draft,         setDraft]         = useState(defaultRaw);
   const [saving,        setSaving]        = useState(false);
   const [captionEdited, setCaptionEdited] = useState(post.caption_edited ?? false);
 
@@ -45,16 +47,17 @@ export function ApprovalScreen({ post, onBack, onAction }: ApprovalScreenProps) 
   const mediaUrl = post.photo_url ?? "";
 
   function startEdit() {
-    setDraft(activeCaption);
+    setDraft(rawCaption);
     setEditing(true);
   }
 
   async function handleSave() {
-    if (draft === activeCaption) { setEditing(false); return; }
+    if (draft === rawCaption) { setEditing(false); return; }
     setSaving(true);
     try {
       await patchContentRequest(post.id, draft);
-      setActiveCaption(draft);
+      setRawCaption(draft);
+      setActiveCaption(withHashtags(draft));
       setCaptionEdited(true);
       setEditing(false);
       toast("Legenda atualizada.");
@@ -153,12 +156,19 @@ export function ApprovalScreen({ post, onBack, onAction }: ApprovalScreenProps) 
             {!editing && post.caption_long && (
               <CaptionVariantSelector
                 post={post}
-                onVariantSelected={(text) => setActiveCaption(text)}
+                onVariantSelected={(fullText, variant) => {
+                  setActiveCaption(fullText);
+                  const raw =
+                    variant === "long"    ? (post.caption_long    ?? "") :
+                    variant === "short"   ? (post.caption_short   ?? "") :
+                                           (post.caption_stories  ?? "");
+                  setRawCaption(raw);
+                }}
               />
             )}
 
-            {/* Texto ativo (quando não tem variantes) */}
-            {!editing && !post.caption_long && (
+            {/* Texto ativo: quando não tem caption_long, ou tem só 1 variante (CaptionVariantSelector retorna null) */}
+            {!editing && (!post.caption_long || (!post.caption_short && !post.caption_stories)) && (
               <p className="text-[15px] leading-relaxed text-(--text-1) whitespace-pre-line">
                 {activeCaption}
               </p>

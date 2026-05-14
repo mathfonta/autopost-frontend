@@ -220,7 +220,7 @@ export default function DashboardPage() {
   }
 
   const pendingPosts   = posts.filter((p) => p.status === "awaiting_approval");
-  const publishedPosts = posts.filter((p) => p.status === "published" || p.status === "approved");
+  const publishedPosts = posts.filter((p) => ["published", "approved", "publishing"].includes(p.status));
   const failedPosts    = posts.filter((p) => p.status === "failed");
 
   // ── Tela de Aprovação ────────────────────────────────────────────────────
@@ -479,9 +479,10 @@ function GalleryGrid({
   return (
     <div className="grid grid-cols-3 gap-2">
       {posts.map((post) => {
-        const isVideo  = post.content_type === "reels" || post.content_type === "story";
-        const imageUrl = isVideo ? null : (post.design_result?.processed_photo_url ?? post.photo_url);
-        const pub      = post.status === "published";
+        const isVideo    = post.content_type === "reels" || post.content_type === "story";
+        const imageUrl   = isVideo ? null : (post.design_result?.processed_photo_url ?? post.photo_url);
+        const pub        = post.status === "published";
+        const pendingPub = post.status === "publishing" || post.status === "approved";
         const pt       = post.content_type ? POST_TYPE_MAP[post.content_type as PostTypeId] : null;
 
         return (
@@ -510,7 +511,7 @@ function GalleryGrid({
             <div className="absolute right-[6px] top-[6px]">
               <div
                 className={`flex items-center gap-[3px] rounded-full px-[6px] py-[2px] ${
-                  pub ? "bg-[#16A34A]" : "bg-red-500/90"
+                  pub ? "bg-[#16A34A]" : pendingPub ? "bg-yellow-500/90" : "bg-red-500/90"
                 }`}
               >
                 {pub && (
@@ -519,7 +520,7 @@ function GalleryGrid({
                   </svg>
                 )}
                 <span className="text-[8px] font-extrabold text-white">
-                  {pub ? "OK" : "FALHOU"}
+                  {pub ? "OK" : pendingPub ? "..." : "FALHOU"}
                 </span>
               </div>
             </div>
@@ -544,6 +545,10 @@ function GalleryGrid({
                     ? <a href={permalink} target="_blank" rel="noopener noreferrer" className={cls}>{inner}</a>
                     : <div className={cls}>{inner}</div>;
                 })()
+              ) : pendingPub ? (
+                <div className="flex w-full items-center justify-center gap-0.75 rounded-[7px] py-1 text-[9px] font-extrabold text-white/70">
+                  Publicando...
+                </div>
               ) : (
                 <button
                   onClick={() => onRetry(post)}
