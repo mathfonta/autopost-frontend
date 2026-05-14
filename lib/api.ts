@@ -141,6 +141,17 @@ export async function getWeeklyInsight(): Promise<WeeklyInsight> {
   return data;
 }
 
+export interface StreakData {
+  streak:    number;
+  week_days: boolean[];
+  week_goal: number;
+}
+
+export async function getStreak(): Promise<StreakData> {
+  const { data } = await api.get<StreakData>("/insights/streak");
+  return data;
+}
+
 // ─── 401 → refresh automático ───────────────────────────────────
 
 let isRefreshing = false;

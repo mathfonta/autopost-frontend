@@ -17,7 +17,7 @@ import { SubStrategySelector } from "@/components/dashboard/SubStrategySelector"
 import { GeneratingScreen } from "@/components/dashboard/GeneratingScreen";
 import { ApprovalScreen }   from "@/components/dashboard/ApprovalScreen";
 import { POST_TYPE_MAP } from "@/lib/post-types";
-import { api, getMetaStatus, retryContentRequest, type MetaStatus } from "@/lib/api";
+import { api, getMetaStatus, getStreak, retryContentRequest, type MetaStatus, type StreakData } from "@/lib/api";
 import { track } from "@/lib/analytics";
 import type { PostTypeId } from "@/lib/post-types";
 import type { ContentRequest, VoiceTone } from "@/lib/types";
@@ -26,12 +26,6 @@ type Screen = "dashboard" | "strategy" | "upload" | "preview" | "generating" | "
 
 const ACCENT = "#2354E8";
 
-// Mock streak — substituir quando /api/streak existir
-const STREAK_MOCK = {
-  streak:   3,
-  weekDays: [true, true, true, false, false, false, false],
-  weekGoal: 5,
-};
 
 export default function DashboardPage() {
   const { user, logout, refresh: refreshUser } = useAuth();
@@ -39,6 +33,7 @@ export default function DashboardPage() {
   const { posts, error, loading, refresh } = useContentRequests();
 
   const [metaStatus, setMetaStatus] = useState<MetaStatus | null>(null);
+  const [streakData, setStreakData] = useState<StreakData | null>(null);
 
   const [screen,        setScreen]        = useState<Screen>("dashboard");
   const [postTypeId,    setPostTypeId]    = useState<PostTypeId | null>(null);
@@ -57,6 +52,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     getMetaStatus().then(setMetaStatus).catch(() => null);
+    getStreak().then(setStreakData).catch(() => null);
   }, []);
 
   function handleNewPostAction() {
@@ -337,8 +333,14 @@ export default function DashboardPage() {
         {/* Conteúdo */}
         <main className="flex flex-col gap-[18px] overflow-y-auto px-4 pb-9 pt-[18px]">
 
-          {/* Streak semanal */}
-          <StreakBar data={STREAK_MOCK} />
+          {/* Streak semanal — dados reais do backend (Story 14.3) */}
+          {streakData && (
+            <StreakBar data={{
+              streak:   streakData.streak,
+              weekDays: streakData.week_days,
+              weekGoal: streakData.week_goal,
+            }} />
+          )}
 
           {/* Inteligência de mercado semanal (Exa Search) */}
           <WeeklyInsightCard />
