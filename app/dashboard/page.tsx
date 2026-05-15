@@ -593,7 +593,31 @@ const ATTACK_GOALS: Record<number, string> = {
 };
 
 function AttackSequenceCard({ position }: { position: number }) {
-  if (position >= 10) return null;
+  if (position >= 10) {
+    return (
+      <div
+        className="rounded-xl p-4"
+        style={{ background: "var(--bg-card)" }}
+      >
+        <div className="mb-1 flex items-center justify-between">
+          <span
+            className="text-xs font-semibold uppercase tracking-wide"
+            style={{ color: ACCENT }}
+          >
+            Plano de Ataque
+          </span>
+          <span className="text-xs text-(--text-4)">10/10 posts</span>
+        </div>
+        <p className="text-sm font-semibold text-(--text-1)">Sequência concluída 🎉</p>
+        <p className="mt-1 text-xs text-(--text-3)">
+          Sua audiência já foi aquecida. Continue publicando para manter o engajamento.
+        </p>
+        <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-(--bg-3)">
+          <div className="h-full w-full rounded-full" style={{ background: ACCENT }} />
+        </div>
+      </div>
+    );
+  }
 
   const postNum = position + 1;
   const goal = ATTACK_GOALS[position] ?? "Consolidação";
