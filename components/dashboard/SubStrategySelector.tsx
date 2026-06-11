@@ -62,7 +62,7 @@ export function SubStrategySelector({ postTypeId, onBack, onSelect, recommendedS
           Qual é o objetivo deste post?
         </p>
 
-        <div className="flex flex-col gap-[10px]">
+        <div className="flex flex-col gap-2.5">
           {strategies.map((s) => {
             const objStyle  = OBJECTIVE_COLORS[s.objective];
             const isExpanded = expandedId === s.id;
@@ -71,12 +71,36 @@ export function SubStrategySelector({ postTypeId, onBack, onSelect, recommendedS
             return (
               <div
                 key={s.id}
-                className="rounded-2xl border border-(--border) bg-(--bg-card) shadow-sm overflow-hidden"
+                className="relative rounded-2xl bg-(--bg-card) shadow-sm overflow-hidden"
+                style={{
+                  border: isRecommended ? "2px solid #F59E0B" : "1px solid var(--border)",
+                }}
               >
+                {/* Badge "Recomendado" — canto superior direito */}
+                {isRecommended && (
+                  <div
+                    className="absolute right-3 -top-px flex items-center gap-0.75 rounded-b-lg px-2.25 py-0.75 text-[10px] font-extrabold uppercase tracking-wide text-white"
+                    style={{ background: "#F59E0B" }}
+                  >
+                    Recomendado
+                  </div>
+                )}
+
+                {/* Estrelinhas — canto superior esquerdo */}
+                {isRecommended && (
+                  <span
+                    className="absolute left-2.5 top-1.5 select-none text-[13px] leading-none"
+                    aria-hidden
+                  >
+                    ✨
+                  </span>
+                )}
+
                 {/* Linha principal — clicável para selecionar */}
                 <button
                   onClick={() => onSelect(s.id)}
-                  className="tap flex w-full items-center gap-4 px-4 py-[14px] text-left"
+                  className="tap flex w-full items-center gap-4 px-4 py-3.5 text-left"
+                  style={{ paddingTop: isRecommended ? "22px" : undefined }}
                 >
                   {/* Ícone */}
                   <div
@@ -92,14 +116,6 @@ export function SubStrategySelector({ postTypeId, onBack, onSelect, recommendedS
                       <p className="text-[15px] font-extrabold leading-tight text-(--text-1)">
                         {s.label}
                       </p>
-                      {isRecommended && (
-                        <span
-                          className="rounded-full px-[8px] py-[2px] text-[10px] font-bold text-white"
-                          style={{ background: ACCENT }}
-                        >
-                          ✨ Recomendado
-                        </span>
-                      )}
                     </div>
                     <p className="mt-0.5 text-[12px] font-medium text-(--text-3)">
                       {s.desc}
@@ -129,9 +145,9 @@ export function SubStrategySelector({ postTypeId, onBack, onSelect, recommendedS
 
                 {/* Conteúdo expandido */}
                 {isExpanded && (
-                  <div className="border-t border-(--border) px-4 pb-4 pt-3 flex flex-col gap-[10px]">
+                  <div className="border-t border-(--border) px-4 pb-4 pt-3 flex flex-col gap-2.5">
                     <div>
-                      <p className="text-[11px] font-bold uppercase tracking-wide text-(--text-3) mb-[3px]">
+                      <p className="text-[11px] font-bold uppercase tracking-wide text-(--text-3) mb-0.75">
                         📍 Quando usar
                       </p>
                       <p className="text-[13px] text-(--text-2)">
@@ -139,7 +155,7 @@ export function SubStrategySelector({ postTypeId, onBack, onSelect, recommendedS
                       </p>
                     </div>
                     <div>
-                      <p className="text-[11px] font-bold uppercase tracking-wide text-(--text-3) mb-[3px]">
+                      <p className="text-[11px] font-bold uppercase tracking-wide text-(--text-3) mb-0.75">
                         📷 O que você precisa
                       </p>
                       <p className="text-[13px] text-(--text-2)">
@@ -147,7 +163,7 @@ export function SubStrategySelector({ postTypeId, onBack, onSelect, recommendedS
                       </p>
                     </div>
                     <div>
-                      <p className="text-[11px] font-bold uppercase tracking-wide text-(--text-3) mb-[3px]">
+                      <p className="text-[11px] font-bold uppercase tracking-wide text-(--text-3) mb-0.75">
                         ✏️ Exemplo de resultado
                       </p>
                       <p className="text-[13px] italic text-(--text-2)">

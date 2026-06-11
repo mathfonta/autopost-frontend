@@ -305,12 +305,10 @@ export default function DashboardPage() {
   if (screen === "strategy" && postTypeId) {
     // Calcula estratégia recomendada: só quando o intent coincide com o postTypeId atual
     const recommendedStrategyId = (() => {
-      if (!selectedIntent) return undefined;
+      if (!selectedIntent || !postTypeId) return undefined;
       const intent = INTENTS.find((i) => i.id === selectedIntent);
-      if (intent && intent.recommendation.postTypeId === postTypeId) {
-        return intent.recommendation.strategyId;
-      }
-      return undefined;
+      if (!intent) return undefined;
+      return intent.recommendation.byFormat[postTypeId] ?? undefined;
     })();
 
     return (
@@ -424,8 +422,8 @@ export default function DashboardPage() {
           {/* Inteligência de mercado semanal (Exa Search) */}
           <WeeklyInsightCard />
 
-          {/* Analytics orgânico Instagram — alcance, seguidores, engajamento (30d) */}
-          <InstagramAnalyticsCard />
+          {/* Analytics orgânico Instagram — desabilitado até aprovar instagram_manage_insights na Meta */}
+          {/* <InstagramAnalyticsCard /> */}
 
           {/* Plano de Ataque — sequência editorial para clientes novos (Story 14.2) */}
           <AttackSequenceCard position={user?.attack_sequence_position ?? 0} />
