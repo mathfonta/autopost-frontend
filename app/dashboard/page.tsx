@@ -9,20 +9,24 @@ import { PostCard } from "@/components/dashboard/PostCard";
 import { ContentTypeBar } from "@/components/dashboard/ContentTypeBar";
 import { StreakBar } from "@/components/dashboard/StreakBar";
 import { WeeklyInsightCard } from "@/components/dashboard/WeeklyInsightCard";
+import { InstagramAnalyticsCard } from "@/components/dashboard/InstagramAnalyticsCard";
 import { UploadScreen } from "@/components/dashboard/UploadScreen";
 import { PhotoPreview } from "@/components/dashboard/PhotoPreview";
 import { ContextModal } from "@/components/dashboard/ContextModal";
 import { MetaTokenWarning } from "@/components/dashboard/MetaTokenWarning";
 import { SubStrategySelector } from "@/components/dashboard/SubStrategySelector";
+import { IntentSelector } from "@/components/dashboard/IntentSelector";
 import { GeneratingScreen } from "@/components/dashboard/GeneratingScreen";
 import { ApprovalScreen }   from "@/components/dashboard/ApprovalScreen";
+import { ThemeSelector }    from "@/components/dashboard/ThemeSelector";
 import { POST_TYPE_MAP } from "@/lib/post-types";
-import { api, getMetaStatus, getStreak, retryContentRequest, type MetaStatus, type StreakData } from "@/lib/api";
+import { api, getMetaStatus, getStreak, retryContentRequest, createAutonomousCarousel, type MetaStatus, type StreakData } from "@/lib/api";
 import { track } from "@/lib/analytics";
+import { INTENTS, type MarketingIntent } from "@/lib/intents";
 import type { PostTypeId } from "@/lib/post-types";
 import type { ContentRequest, VoiceTone } from "@/lib/types";
 
-type Screen = "dashboard" | "strategy" | "upload" | "preview" | "generating" | "approval";
+type Screen = "dashboard" | "intent" | "strategy" | "upload" | "preview" | "generating" | "approval" | "themes";
 
 const ACCENT = "#2354E8";
 
@@ -35,12 +39,13 @@ export default function DashboardPage() {
   const [metaStatus, setMetaStatus] = useState<MetaStatus | null>(null);
   const [streakData, setStreakData] = useState<StreakData | null>(null);
 
-  const [screen,        setScreen]        = useState<Screen>("dashboard");
-  const [postTypeId,    setPostTypeId]    = useState<PostTypeId | null>(null);
-  const [strategyId,    setStrategyId]    = useState<string | null>(null);
-  const [pendingFile,   setPendingFile]   = useState<File | null>(null);
-  const [pendingFiles,  setPendingFiles]  = useState<File[]>([]);
-  const [photoUrl,      setPhotoUrl]      = useState<string | null>(null);
+  const [screen,          setScreen]          = useState<Screen>("dashboard");
+  const [postTypeId,      setPostTypeId]      = useState<PostTypeId | null>(null);
+  const [strategyId,      setStrategyId]      = useState<string | null>(null);
+  const [selectedIntent,  setSelectedIntent]  = useState<MarketingIntent | null>(null);
+  const [pendingFile,     setPendingFile]     = useState<File | null>(null);
+  const [pendingFiles,    setPendingFiles]    = useState<File[]>([]);
+  const [photoUrl,        setPhotoUrl]        = useState<string | null>(null);
 
   const [contextOpen,   setContextOpen]   = useState(false);
   const [uploading,     setUploading]     = useState(false);
@@ -49,6 +54,7 @@ export default function DashboardPage() {
   const [generatingId,          setGeneratingId]          = useState<string | null>(null);
   const [generatingContentType, setGeneratingContentType] = useState<string | null>(null);
   const [approvalPost,          setApprovalPost]          = useState<ContentRequest | null>(null);
+  const [selectedThemeId,       setSelectedThemeId]       = useState<string | null>(null);
 
   useEffect(() => {
     getMetaStatus().then(setMetaStatus).catch(() => null);
@@ -56,9 +62,46 @@ export default function DashboardPage() {
   }, []);
 
   function handleNewPostAction() {
-    setPostTypeId("feed_photo");
-    setScreen("upload");
+    setScreen("intent");
     router.replace("/dashboard");
+  }
+
+  function handleIntentSelected(intentId: MarketingIntent) {
+    setSelectedIntent(intentId);
+    const intent = INTENTS.find((i) => i.id === intentId);
+    if (intent) {
+      setPostTypeId(intent.recommendation.postTypeId);
+    }
+    setScreen("strategy");
+  }
+
+  function handleIntentSkip() {
+    setSelectedIntent(null);
+    setScreen("dashboard");
+  }
+
+  function handleIntentBack() {
+    setScreen("dashboard");
+  }
+
+  function handleAutonomousSelected() {
+    setScreen("themes");
+  }
+
+  async function handleThemeSelected(themeId: string) {
+    setSelectedThemeId(themeId);
+    // Mostra overlay de upload enquanto cria a requisição autônoma
+    setUploading(true);
+    try {
+      const req = await createAutonomousCarousel(themeId, selectedIntent ?? undefined);
+      setGeneratingId(req.id);
+      setGeneratingContentType("carousel");
+      setScreen("generating");
+    } catch {
+      setScreen("dashboard");
+    } finally {
+      setUploading(false);
+    }
   }
 
   function handleTypeSelected(id: PostTypeId) {
@@ -133,6 +176,7 @@ export default function DashboardPage() {
       if (intent)           formData.append("content_type", intent);
       if (strategyId)       formData.append("strategy", strategyId);
       if (context?.trim())  formData.append("user_context", context.trim());
+      if (selectedIntent)   formData.append("marketing_intent", selectedIntent);
       const { data } = await api.post<{ id: string }>("/content-requests", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
@@ -181,6 +225,8 @@ export default function DashboardPage() {
     setPendingFiles([]);
     setPostTypeId(null);
     setStrategyId(null);
+    setSelectedIntent(null);
+    setSelectedThemeId(null);
   }
 
   function handleContextConfirm(context: string) {
@@ -243,13 +289,45 @@ export default function DashboardPage() {
     );
   }
 
+  // ── Tela Intent ───────────────────────────────────────────────────────────
+  if (screen === "intent") {
+    return (
+      <IntentSelector
+        onSelect={handleIntentSelected}
+        onBack={handleIntentBack}
+        onSkip={handleIntentSkip}
+      />
+    );
+  }
+
   // ── Tela Sub-estratégia ───────────────────────────────────────────────────
   if (screen === "strategy" && postTypeId) {
+    // Calcula estratégia recomendada: só quando o intent coincide com o postTypeId atual
+    const recommendedStrategyId = (() => {
+      if (!selectedIntent) return undefined;
+      const intent = INTENTS.find((i) => i.id === selectedIntent);
+      if (intent && intent.recommendation.postTypeId === postTypeId) {
+        return intent.recommendation.strategyId;
+      }
+      return undefined;
+    })();
+
     return (
       <SubStrategySelector
         postTypeId={postTypeId}
         onBack={handleStrategyBack}
         onSelect={handleStrategySelected}
+        recommendedStrategyId={recommendedStrategyId}
+      />
+    );
+  }
+
+  // ── Tela de Seleção de Tema (Modo Autônomo) ──────────────────────────────
+  if (screen === "themes") {
+    return (
+      <ThemeSelector
+        onSelect={handleThemeSelected}
+        onBack={() => setScreen("dashboard")}
       />
     );
   }
@@ -345,12 +423,16 @@ export default function DashboardPage() {
           {/* Inteligência de mercado semanal (Exa Search) */}
           <WeeklyInsightCard />
 
+          {/* Analytics orgânico Instagram — alcance, seguidores, engajamento (30d) */}
+          <InstagramAnalyticsCard />
+
           {/* Plano de Ataque — sequência editorial para clientes novos (Story 14.2) */}
           <AttackSequenceCard position={user?.attack_sequence_position ?? 0} />
 
           {/* Seletor de tipo de conteúdo */}
           <ContentTypeBar
             onTypeSelected={handleTypeSelected}
+            onAutonomousSelected={handleAutonomousSelected}
             uploading={uploading}
             uploadingType={uploadingType}
           />

@@ -14,6 +14,63 @@ const ACCENT   = "#2354E8";
 const MAX_CHARS = 2200;
 const VIDEO_TYPES = new Set(["reels", "story"]);
 
+// ---------------------------------------------------------------------------
+// SlideGallery — exibição de carrossel com thumbnails clicáveis
+// ---------------------------------------------------------------------------
+
+interface SlideGalleryProps {
+  slides: string[];
+}
+
+function SlideGallery({ slides }: SlideGalleryProps) {
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  if (slides.length === 0) return null;
+
+  return (
+    <div className="bg-black">
+      {/* Preview do slide ativo */}
+      <div className="relative">
+        <img
+          src={slides[activeIndex]}
+          alt={`Slide ${activeIndex + 1}`}
+          className="block w-full object-cover"
+          style={{ maxHeight: "55vh" }}
+          loading="eager"
+        />
+        {/* Indicador de posição */}
+        <div className="absolute bottom-3 right-3 rounded-full bg-black/50 px-2.5 py-1 text-[12px] font-semibold text-white">
+          {activeIndex + 1}/{slides.length}
+        </div>
+      </div>
+
+      {/* Tira de thumbnails */}
+      {slides.length > 1 && (
+        <div className="flex gap-2 overflow-x-auto px-4 py-3 scrollbar-none">
+          {slides.map((url, i) => (
+            <button
+              key={i}
+              onClick={() => setActiveIndex(i)}
+              className={`shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
+                i === activeIndex
+                  ? "border-white opacity-100"
+                  : "border-transparent opacity-50"
+              }`}
+            >
+              <img
+                src={url}
+                alt={`Slide ${i + 1}`}
+                className="block h-14 w-14 object-cover"
+                loading="lazy"
+              />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface ApprovalScreenProps {
   post:     ContentRequest;
   onBack:   () => void;
@@ -24,6 +81,9 @@ export function ApprovalScreen({ post, onBack, onAction }: ApprovalScreenProps) 
   const { toast } = useToast();
   const isVideo = VIDEO_TYPES.has(post.content_type ?? "");
   const pt      = post.content_type ? POST_TYPE_MAP[post.content_type as PostTypeId] : null;
+
+  const isAutonomousCarousel = post.content_type === "autonomous_carousel";
+  const slideUrls = isAutonomousCarousel ? (post.photo_urls ?? []) : [];
 
   // Monta caption completo com hashtags no final
   function withHashtags(text: string): string {
@@ -86,31 +146,35 @@ export function ApprovalScreen({ post, onBack, onAction }: ApprovalScreenProps) 
       <div className="flex-1 overflow-y-auto">
 
         {/* Mídia */}
-        <div className="relative bg-black">
-          {isVideo ? (
-            mediaUrl ? (
-              <video
-                src={mediaUrl}
-                controls
-                playsInline
-                className="block w-full"
-                style={{ maxHeight: "55vh" }}
-              />
+        {isAutonomousCarousel && slideUrls.length > 0 ? (
+          <SlideGallery slides={slideUrls} />
+        ) : (
+          <div className="relative bg-black">
+            {isVideo ? (
+              mediaUrl ? (
+                <video
+                  src={mediaUrl}
+                  controls
+                  playsInline
+                  className="block w-full"
+                  style={{ maxHeight: "55vh" }}
+                />
+              ) : (
+                <div className="flex aspect-[4/3] items-center justify-center">
+                  <Video size={48} className="text-(--text-4)" />
+                </div>
+              )
             ) : (
-              <div className="flex aspect-[4/3] items-center justify-center">
-                <Video size={48} className="text-(--text-4)" />
-              </div>
-            )
-          ) : (
-            mediaUrl ? (
-              <img src={mediaUrl} alt="Post" className="block w-full object-cover" />
-            ) : (
-              <div className="aspect-square bg-(--bg-card) flex items-center justify-center text-(--text-4)">
-                Sem imagem
-              </div>
-            )
-          )}
-        </div>
+              mediaUrl ? (
+                <img src={mediaUrl} alt="Post" className="block w-full object-cover" />
+              ) : (
+                <div className="aspect-square bg-(--bg-card) flex items-center justify-center text-(--text-4)">
+                  Sem imagem
+                </div>
+              )
+            )}
+          </div>
+        )}
 
         <div className="px-4 pt-5 space-y-4">
           {/* Badge de tipo */}
