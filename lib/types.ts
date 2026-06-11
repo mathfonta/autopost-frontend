@@ -38,6 +38,7 @@ export interface ContentRequest {
   id: string;
   status: ContentStatus;
   photo_url: string;
+  photo_urls: string[] | null;
   source_channel: string;
   celery_task_id: string | null;
   error_message: string | null;

@@ -152,6 +152,59 @@ export async function getStreak(): Promise<StreakData> {
   return data;
 }
 
+export interface DailyDataPoint {
+  date: string;
+  value: number;
+}
+
+export interface InstagramAnalyticsData {
+  period_days: number;
+  reach_total: number;
+  reach_daily: DailyDataPoint[];
+  follower_growth: number;
+  follower_daily: DailyDataPoint[];
+  accounts_engaged: number;
+  profile_views: number;
+  collected_at: string;
+}
+
+export async function getInstagramAnalytics(): Promise<InstagramAnalyticsData> {
+  const { data } = await api.get<InstagramAnalyticsData>("/insights/instagram");
+  return data;
+}
+
+// ─── Modo Autônomo ───────────────────────────────────────────────
+
+export interface Theme {
+  id: string;
+  title: string;
+  description: string;
+  objective: string;
+  slide_count: number;
+  tags: string[];
+}
+
+export interface ThemesResponse {
+  segment: string;
+  themes: Theme[];
+}
+
+export async function getThemes(): Promise<ThemesResponse> {
+  const { data } = await api.get<ThemesResponse>("/insights/themes");
+  return data;
+}
+
+export async function createAutonomousCarousel(
+  themeId: string,
+  marketingIntent?: string,
+): Promise<ContentRequest> {
+  const { data } = await api.post<ContentRequest>("/content-requests/autonomous", {
+    theme_id: themeId,
+    marketing_intent: marketingIntent ?? null,
+  });
+  return data;
+}
+
 // ─── 401 → refresh automático ───────────────────────────────────
 
 let isRefreshing = false;
