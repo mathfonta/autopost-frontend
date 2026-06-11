@@ -194,6 +194,24 @@ export async function getThemes(): Promise<ThemesResponse> {
   return data;
 }
 
+export interface StrategyRecommendation {
+  intent:        string;
+  format:        string;
+  strategy:      string;
+  source:        "history" | "editorial";
+  history_count: number;
+}
+
+export async function getStrategyRecommendation(
+  intent: string,
+  format: string,
+): Promise<StrategyRecommendation> {
+  const { data } = await api.get<StrategyRecommendation>("/insights/strategy-recommendation", {
+    params: { intent, format },
+  });
+  return data;
+}
+
 export async function createAutonomousCarousel(
   themeId: string,
   marketingIntent?: string,

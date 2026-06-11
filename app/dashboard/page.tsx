@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Camera, LogOut, History, Zap, RefreshCw, Play } from "lucide-react";
+import { Camera, LogOut, History, Zap, RefreshCw, Play, ChevronDown, ChevronUp, ArrowRight } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useContentRequests } from "@/hooks/useContentRequests";
 import { PostCard } from "@/components/dashboard/PostCard";
@@ -20,7 +20,7 @@ import { GeneratingScreen } from "@/components/dashboard/GeneratingScreen";
 import { ApprovalScreen }   from "@/components/dashboard/ApprovalScreen";
 import { ThemeSelector }    from "@/components/dashboard/ThemeSelector";
 import { POST_TYPE_MAP } from "@/lib/post-types";
-import { api, getMetaStatus, getStreak, retryContentRequest, createAutonomousCarousel, type MetaStatus, type StreakData } from "@/lib/api";
+import { api, getMetaStatus, getStreak, retryContentRequest, createAutonomousCarousel, getStrategyRecommendation, type MetaStatus, type StreakData } from "@/lib/api";
 import { track } from "@/lib/analytics";
 import { INTENTS, type MarketingIntent } from "@/lib/intents";
 import type { PostTypeId } from "@/lib/post-types";
@@ -55,6 +55,7 @@ export default function DashboardPage() {
   const [generatingContentType, setGeneratingContentType] = useState<string | null>(null);
   const [approvalPost,          setApprovalPost]          = useState<ContentRequest | null>(null);
   const [selectedThemeId,       setSelectedThemeId]       = useState<string | null>(null);
+  const [dataRecommendedStrategy, setDataRecommendedStrategy] = useState<string | null>(null);
 
   useEffect(() => {
     getMetaStatus().then(setMetaStatus).catch(() => null);
@@ -66,14 +67,24 @@ export default function DashboardPage() {
     router.replace("/dashboard");
   }
 
-  function handleIntentSelected(intentId: MarketingIntent) {
+  async function handleIntentSelected(intentId: MarketingIntent) {
     setSelectedIntent(intentId);
     // Só aplica recomendação de formato se o usuário não pré-selecionou um
-    if (!postTypeId) {
+    const effectiveFormat = postTypeId ?? (() => {
       const intent = INTENTS.find((i) => i.id === intentId);
-      if (intent) setPostTypeId(intent.recommendation.postTypeId);
-    }
+      if (intent) { setPostTypeId(intent.recommendation.postTypeId); return intent.recommendation.postTypeId; }
+      return null;
+    })();
+
+    setDataRecommendedStrategy(null);
     setScreen("strategy");
+
+    // Busca recomendação data-driven em background (não bloqueia navegação)
+    if (effectiveFormat) {
+      getStrategyRecommendation(intentId, effectiveFormat)
+        .then((r) => setDataRecommendedStrategy(r.strategy))
+        .catch(() => null);
+    }
   }
 
   function handleIntentSkip() {
@@ -113,6 +124,13 @@ export default function DashboardPage() {
 
   function handleStrategySelected(id: string) {
     setStrategyId(id);
+    setScreen("upload");
+  }
+
+  function handleAttackPost(typeId: PostTypeId, strategy: string) {
+    setPostTypeId(typeId);
+    setStrategyId(strategy);
+    setSelectedIntent(null);
     setScreen("upload");
   }
 
@@ -304,11 +322,11 @@ export default function DashboardPage() {
   // ── Tela Sub-estratégia ───────────────────────────────────────────────────
   if (screen === "strategy" && postTypeId) {
     // Calcula estratégia recomendada: só quando o intent coincide com o postTypeId atual
-    const recommendedStrategyId = (() => {
+    // Data-driven tem prioridade; fallback para byFormat editorial
+    const recommendedStrategyId: string | undefined = dataRecommendedStrategy ?? (() => {
       if (!selectedIntent || !postTypeId) return undefined;
       const intent = INTENTS.find((i) => i.id === selectedIntent);
-      if (!intent) return undefined;
-      return intent.recommendation.byFormat[postTypeId] ?? undefined;
+      return intent?.recommendation.byFormat[postTypeId] ?? undefined;
     })();
 
     return (
@@ -425,8 +443,8 @@ export default function DashboardPage() {
           {/* Analytics orgânico Instagram — desabilitado até aprovar instagram_manage_insights na Meta */}
           {/* <InstagramAnalyticsCard /> */}
 
-          {/* Plano de Ataque — sequência editorial para clientes novos (Story 14.2) */}
-          <AttackSequenceCard position={user?.attack_sequence_position ?? 0} />
+          {/* Plano de Ataque — sequência editorial para clientes novos (Story 14.2 / 18.1) */}
+          <AttackSequenceCard position={user?.attack_sequence_position ?? 0} onAttackPost={handleAttackPost} />
 
           {/* Seletor de tipo de conteúdo */}
           <ContentTypeBar
@@ -664,35 +682,41 @@ function NewPostTrigger({ onNewPost }: { onNewPost: () => void }) {
   return null;
 }
 
-/* ── AttackSequenceCard — sequência de ataque editorial para clientes novos (Story 14.2) ── */
-const ATTACK_GOALS: Record<number, string> = {
-  0: "Retenção — teste inicial",
-  1: "Salvamentos",
-  2: "Comentários e shares",
-  3: "Qualificação de audiência",
-  4: "Replays + permanência",
-};
+/* ── AttackSequenceCard — sequência editorial completa (Story 18.1) ── */
+interface AttackStep {
+  goal:        string;
+  why:         string;
+  format:      PostTypeId;
+  formatLabel: string;
+  strategy:    string;
+  strategyLabel: string;
+}
 
-function AttackSequenceCard({ position }: { position: number }) {
+const ATTACK_SEQUENCE: AttackStep[] = [
+  { goal: "Apresentação da marca",  why: "Primeiro contato — estabelece identidade visual e gera alcance inicial",          format: "feed_photo", formatLabel: "Feed Photo",  strategy: "ancora_de_marca",      strategyLabel: "Âncora de Marca"       },
+  { goal: "Salvamentos",            why: "Conteúdo útil salvo = audiência que volta e sinaliza qualidade ao algoritmo",     format: "carousel",   formatLabel: "Carrossel",   strategy: "checklist",            strategyLabel: "Checklist"             },
+  { goal: "Comentários",            why: "Pergunta direta gera comentários imediatos e amplia distribuição orgânica",       format: "feed_photo", formatLabel: "Feed Photo",  strategy: "curiosidade_pergunta", strategyLabel: "Curiosidade + Pergunta"},
+  { goal: "Autoridade técnica",     why: "Tutorial detalhado posiciona como especialista e gera saves",                    format: "carousel",   formatLabel: "Carrossel",   strategy: "passo_a_passo",        strategyLabel: "Passo a Passo"         },
+  { goal: "Alcance orgânico",       why: "Reels com hook forte têm o maior alcance orgânico — quebra bolha",               format: "reels",      formatLabel: "Reels",       strategy: "hook_choque",          strategyLabel: "Hook de Choque"        },
+  { goal: "Prova social",           why: "Resultado real constrói confiança e gera pedidos de orçamento",                  format: "feed_photo", formatLabel: "Feed Photo",  strategy: "prova_social",         strategyLabel: "Prova Social"          },
+  { goal: "Retenção de vídeo",      why: "Tutorial POV gera watches completos — métrica de qualidade do algoritmo",        format: "reels",      formatLabel: "Reels",       strategy: "tutorial_pov",         strategyLabel: "Tutorial POV"          },
+  { goal: "Debate e shares",        why: "Comparativo gera opiniões, comentários e compartilhamentos espontâneos",         format: "carousel",   formatLabel: "Carrossel",   strategy: "comparativo",          strategyLabel: "Comparativo"           },
+  { goal: "Humanização",            why: "Bastidores criam conexão emocional e aumentam fidelidade da audiência",          format: "story",      formatLabel: "Story",       strategy: "bastidores_dia",       strategyLabel: "Bastidores do Dia"     },
+  { goal: "Conversão direta",       why: "Destaque do serviço com CTA claro — audiência aquecida converte em contato",     format: "feed_photo", formatLabel: "Feed Photo",  strategy: "hero_shot",            strategyLabel: "Hero Shot"             },
+];
+
+function AttackSequenceCard({ position, onAttackPost }: { position: number; onAttackPost?: (format: PostTypeId, strategy: string) => void }) {
+  const [open, setOpen] = useState(false);
+
   if (position >= 10) {
     return (
-      <div
-        className="rounded-xl p-4"
-        style={{ background: "var(--bg-card)" }}
-      >
+      <div className="rounded-xl p-4" style={{ background: "var(--bg-card)" }}>
         <div className="mb-1 flex items-center justify-between">
-          <span
-            className="text-xs font-semibold uppercase tracking-wide"
-            style={{ color: ACCENT }}
-          >
-            Plano de Ataque
-          </span>
+          <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: ACCENT }}>Plano de Ataque</span>
           <span className="text-xs text-(--text-4)">10/10 posts</span>
         </div>
         <p className="text-sm font-semibold text-(--text-1)">Sequência concluída 🎉</p>
-        <p className="mt-1 text-xs text-(--text-3)">
-          Sua audiência já foi aquecida. Continue publicando para manter o engajamento.
-        </p>
+        <p className="mt-1 text-xs text-(--text-3)">Sua audiência já foi aquecida. Continue publicando para manter o engajamento.</p>
         <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-(--bg-3)">
           <div className="h-full w-full rounded-full" style={{ background: ACCENT }} />
         </div>
@@ -700,42 +724,63 @@ function AttackSequenceCard({ position }: { position: number }) {
     );
   }
 
+  const step   = ATTACK_SEQUENCE[position];
   const postNum = position + 1;
-  const goal = ATTACK_GOALS[position] ?? "Consolidação";
-  const pct = Math.round((position / 10) * 100);
+  const pct    = Math.round((position / 10) * 100);
 
   return (
-    <div
-      className="rounded-xl p-4"
-      style={{ background: "var(--bg-card)" }}
-    >
-      <div className="mb-3 flex items-center justify-between">
-        <span
-          className="text-xs font-semibold uppercase tracking-wide"
-          style={{ color: ACCENT }}
-        >
-          Plano de Ataque
-        </span>
-        <span className="text-xs text-(--text-4)">{position}/10 posts</span>
-      </div>
+    <div className="rounded-xl overflow-hidden" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+      {/* Header clicável */}
+      <button
+        className="tap w-full px-4 py-3.5 text-left"
+        onClick={() => setOpen((v) => !v)}
+      >
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: ACCENT }}>Plano de Ataque</span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-(--text-4)">{position}/10 posts</span>
+            {open ? <ChevronUp size={14} className="text-(--text-3)" /> : <ChevronDown size={14} className="text-(--text-3)" />}
+          </div>
+        </div>
 
-      <p className="mb-1 text-sm font-semibold text-(--text-1)">
-        Post {postNum}/10
-      </p>
-      <p className="mb-3 text-xs text-(--text-3)">
-        Objetivo:{" "}
-        <span className="font-medium text-(--text-2)">{goal}</span>
-      </p>
+        <p className="mb-0.5 text-sm font-semibold text-(--text-1)">Post {postNum}/10 — {step.goal}</p>
+        <p className="text-xs text-(--text-3)">
+          Formato sugerido: <span className="font-medium text-(--text-2)">{step.formatLabel} · {step.strategyLabel}</span>
+        </p>
 
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-(--bg-3)">
-        <div
-          className="h-full rounded-full transition-all duration-500"
-          style={{ width: `${pct}%`, background: ACCENT }}
-        />
-      </div>
-      <p className="mt-1 text-right text-[10px] text-(--text-4)">
-        {pct}% concluído
-      </p>
+        <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-(--bg-3)">
+          <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: ACCENT }} />
+        </div>
+        <p className="mt-1 text-right text-[10px] text-(--text-4)">{pct}% concluído</p>
+      </button>
+
+      {/* Detalhe expandido */}
+      {open && (
+        <div className="border-t px-4 pb-4 pt-3" style={{ borderColor: "var(--border)" }}>
+          <p className="mb-3 text-[13px] text-(--text-2)">{step.why}</p>
+
+          <div className="mb-4 flex gap-2">
+            <div className="flex-1 rounded-lg px-3 py-2" style={{ background: "var(--bg-input)" }}>
+              <p className="text-[10px] font-bold uppercase tracking-wide text-(--text-3) mb-0.5">Formato</p>
+              <p className="text-[13px] font-semibold text-(--text-1)">{step.formatLabel}</p>
+            </div>
+            <div className="flex-1 rounded-lg px-3 py-2" style={{ background: "var(--bg-input)" }}>
+              <p className="text-[10px] font-bold uppercase tracking-wide text-(--text-3) mb-0.5">Estratégia</p>
+              <p className="text-[13px] font-semibold text-(--text-1)">{step.strategyLabel}</p>
+            </div>
+          </div>
+
+          {onAttackPost && (
+            <button
+              onClick={() => { setOpen(false); onAttackPost(step.format, step.strategy); }}
+              className="tap flex w-full items-center justify-center gap-2 rounded-xl py-3 text-[14px] font-extrabold text-white"
+              style={{ background: ACCENT }}
+            >
+              Criar este post <ArrowRight size={16} strokeWidth={2.5} />
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
