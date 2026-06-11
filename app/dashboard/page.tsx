@@ -68,9 +68,10 @@ export default function DashboardPage() {
 
   function handleIntentSelected(intentId: MarketingIntent) {
     setSelectedIntent(intentId);
-    const intent = INTENTS.find((i) => i.id === intentId);
-    if (intent) {
-      setPostTypeId(intent.recommendation.postTypeId);
+    // Só aplica recomendação de formato se o usuário não pré-selecionou um
+    if (!postTypeId) {
+      const intent = INTENTS.find((i) => i.id === intentId);
+      if (intent) setPostTypeId(intent.recommendation.postTypeId);
     }
     setScreen("strategy");
   }
@@ -107,7 +108,7 @@ export default function DashboardPage() {
   function handleTypeSelected(id: PostTypeId) {
     setPostTypeId(id);
     setStrategyId(null);
-    setScreen("strategy");
+    setScreen("intent");
   }
 
   function handleStrategySelected(id: string) {
