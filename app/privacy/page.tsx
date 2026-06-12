@@ -19,7 +19,7 @@ export default function PrivacyPage() {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 space-y-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Política de Privacidade</h1>
-            <p className="text-gray-500 text-sm mt-2">Última atualização: 19 de abril de 2026</p>
+            <p className="text-gray-500 text-sm mt-2">Última atualização: 12 de junho de 2026</p>
           </div>
 
           <section className="space-y-3">
@@ -39,7 +39,7 @@ export default function PrivacyPage() {
             <h2 className="text-xl font-semibold text-gray-800">2. Dados que coletamos</h2>
             <ul className="space-y-2 text-gray-600">
               <li className="flex gap-2"><span className="text-blue-500 mt-1">•</span><span><strong>Dados de conta:</strong> nome, endereço de e-mail e senha (armazenada em hash) fornecidos no cadastro.</span></li>
-              <li className="flex gap-2"><span className="text-blue-500 mt-1">•</span><span><strong>Dados da conta Meta/Instagram:</strong> token de acesso OAuth, ID da conta, nome de usuário e dados públicos do perfil do Instagram, obtidos com seu consentimento explícito via login com Facebook.</span></li>
+              <li className="flex gap-2"><span className="text-blue-500 mt-1">•</span><span><strong>Dados da conta Instagram:</strong> token de acesso OAuth, ID da conta, nome de usuário e dados públicos do perfil do Instagram, obtidos com seu consentimento explícito via Instagram Login.</span></li>
               <li className="flex gap-2"><span className="text-blue-500 mt-1">•</span><span><strong>Conteúdo enviado:</strong> fotos e imagens que você envia para publicação.</span></li>
               <li className="flex gap-2"><span className="text-blue-500 mt-1">•</span><span><strong>Dados de uso:</strong> logs de publicações realizadas, aprovações, rejeições e métricas de engajamento coletadas do Instagram.</span></li>
               <li className="flex gap-2"><span className="text-blue-500 mt-1">•</span><span><strong>Dados técnicos:</strong> endereço IP, tipo de navegador e informações de sessão para fins de segurança.</span></li>
@@ -109,10 +109,10 @@ export default function PrivacyPage() {
           <section className="space-y-3">
             <h2 className="text-xl font-semibold text-gray-800">5. Token de acesso ao Instagram</h2>
             <p className="text-gray-600 leading-relaxed">
-              O token OAuth obtido via login com Facebook é armazenado de forma segura e criptografada
+              O token OAuth obtido via Instagram Login é armazenado de forma segura e criptografada
               no banco de dados. Ele é usado exclusivamente para publicar conteúdo em seu nome no
               Instagram. Você pode revogar o acesso a qualquer momento em{" "}
-              <strong>facebook.com/settings → Aplicativos e sites</strong> ou excluindo sua conta no AutoPost.
+              <strong>instagram.com → Configurações → Apps e sites</strong> ou excluindo sua conta no AutoPost.
               O token expira em 60 dias e pode precisar ser renovado.
             </p>
           </section>
