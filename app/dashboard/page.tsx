@@ -14,6 +14,7 @@ import { UploadScreen } from "@/components/dashboard/UploadScreen";
 import { PhotoPreview } from "@/components/dashboard/PhotoPreview";
 import { ContextModal } from "@/components/dashboard/ContextModal";
 import { MetaTokenWarning } from "@/components/dashboard/MetaTokenWarning";
+import { MetaAccountCard } from "@/components/dashboard/MetaAccountCard";
 import { SubStrategySelector } from "@/components/dashboard/SubStrategySelector";
 import { IntentSelector } from "@/components/dashboard/IntentSelector";
 import { GeneratingScreen } from "@/components/dashboard/GeneratingScreen";
@@ -459,6 +460,14 @@ export default function DashboardPage() {
             <MetaTokenWarning
               status={metaStatus}
               onRenewed={() => getMetaStatus().then(setMetaStatus).catch(() => null)}
+            />
+          )}
+
+          {/* Conta Instagram conectada — permite trocar de conta */}
+          {metaStatus && (
+            <MetaAccountCard
+              status={metaStatus}
+              onDisconnected={() => router.replace("/onboarding")}
             />
           )}
 

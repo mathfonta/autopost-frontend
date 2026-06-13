@@ -113,6 +113,11 @@ export async function getMetaStatus(): Promise<MetaStatus> {
   return data;
 }
 
+export async function disconnectMeta(): Promise<{ disconnected: boolean }> {
+  const { data } = await api.delete<{ disconnected: boolean }>("/meta/disconnect");
+  return data;
+}
+
 // ─── Perfil ──────────────────────────────────────────────────────
 
 export async function updateProfile(voice_tone: string): Promise<void> {
