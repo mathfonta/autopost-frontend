@@ -64,6 +64,12 @@ export function StepConnectInstagram({
         </p>
       </div>
 
+      <div className="bg-blue-50 rounded-xl px-4 py-3 text-xs text-blue-700 leading-relaxed">
+        Sua conta do Instagram precisa ser <strong>Business ou Creator</strong> (conta profissional).
+        Se a sua for pessoal, é grátis e leva 1 minuto para converter: no app do Instagram, vá em{" "}
+        <strong>Configurações → Conta → Mudar para conta profissional</strong>.
+      </div>
+
       {error && <p className="text-sm text-red-500 text-center">{error}</p>}
 
       <button

@@ -34,13 +34,19 @@ function OnboardingContent() {
           }
         }
 
-        // Retorno do OAuth Meta: ?connected=true&username=xxx
+        // Retorno do OAuth Meta: ?connected=true&username=xxx ou ?connected=false&error=...
         const connected = searchParams.get("connected");
         const username = searchParams.get("username");
+        const oauthError = searchParams.get("error");
         if (connected === "true" && username) {
           setConnectedUsername(username);
           setStep(2); // pula para etapa Concluído
           toast(`Instagram @${username} conectado com sucesso!`);
+          return;
+        }
+        if (connected === "false" && oauthError) {
+          setStep(1); // mantém na etapa de conexão do Instagram
+          toast(oauthError, "error");
           return;
         }
 
