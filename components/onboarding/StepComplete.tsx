@@ -5,12 +5,14 @@ import { useRouter } from "next/navigation";
 import { PartyPopper, Camera, CheckCircle, Bell, Sparkles } from "lucide-react";
 import { subscribeToPush } from "@/lib/push";
 import { getScoutStatus, acceptScoutSuggestion, type ScoutInsights } from "@/lib/api";
+import { useToast } from "@/components/ui/toast";
 
 const SCOUT_POLL_INTERVAL_MS = 5000;
 const SCOUT_POLL_MAX_ATTEMPTS = 12; // ~60s — o Scout roda em background; se demorar mais, o usuário só não vê a sugestão nesta sessão (AC2/AC6: nunca bloqueia)
 
 export function StepComplete() {
   const router = useRouter();
+  const { toast } = useToast();
   const [pushState, setPushState] = useState<"idle" | "asking" | "granted" | "denied">("idle");
 
   // Agente Scout (Epic 22, Story 22.5) — status é sempre um enriquecimento
@@ -69,11 +71,14 @@ export function StepComplete() {
     setScoutAccepting(true);
     try {
       await acceptScoutSuggestion();
+      setScoutSuggestion(null); // sucesso: dispensa o card
     } catch {
-      // Falha ao aceitar não é crítica — o usuário pode ajustar o segmento depois nas configurações
+      // Não há tela de configurações para ajustar o segmento depois — se a
+      // aplicação falhar, mantém o card visível (com feedback) para o
+      // usuário poder tentar de novo, em vez de dispensar silenciosamente.
+      toast("Não foi possível aplicar o segmento agora. Tente novamente.", "error");
     } finally {
       setScoutAccepting(false);
-      setScoutSuggestion(null);
     }
   };
 
@@ -136,8 +141,8 @@ export function StepComplete() {
             <p className="text-xs text-purple-900 leading-relaxed">
               Analisamos seus posts recentes e identificamos que seu negócio parece ser mais
               específico do que <strong>{scoutSuggestion.suggested_segment}</strong>
-              {scoutSuggestion.refined_niche ? `: ${scoutSuggestion.refined_niche}` : "."} Quer usar
-              esse segmento para personalizar ainda mais seu conteúdo?
+              {scoutSuggestion.refined_niche ? ` (${scoutSuggestion.refined_niche}).` : "."} Quer
+              usar esse segmento para personalizar ainda mais seu conteúdo?
             </p>
           </div>
           <div className="flex gap-2">
