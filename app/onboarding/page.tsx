@@ -23,18 +23,13 @@ function OnboardingContent() {
   useEffect(() => {
     const init = async () => {
       try {
-        // Se onboarding já concluído, redirecionar ao dashboard
-        const status = await getOnboardingStatus();
-        if (status.status === "done") {
-          // Verificar também se Instagram está conectado — se sim, onboarding realmente completo
-          const meta = await getMetaStatus();
-          if (meta.connected) {
-            router.replace("/dashboard");
-            return;
-          }
-        }
-
         // Retorno do OAuth Meta: ?connected=true&username=xxx ou ?connected=false&error=...
+        // Verificado ANTES do atalho "onboarding já concluído" — o perfil de
+        // marca (Step 0) normalmente já existe quando o usuário volta da
+        // Meta, então "done" + "conectado" ficam verdadeiros no mesmo
+        // instante em que o connected=true chega. Sem essa ordem, o usuário
+        // seria mandado direto ao /dashboard e nunca veria a etapa de
+        // conclusão (nem o status do Agente Scout, Story 22.5).
         const connected = searchParams.get("connected");
         const username = searchParams.get("username");
         const oauthError = searchParams.get("error");
@@ -48,6 +43,17 @@ function OnboardingContent() {
           setStep(1); // mantém na etapa de conexão do Instagram
           toast(oauthError, "error");
           return;
+        }
+
+        // Sem retorno pendente da Meta: se onboarding já concluído E
+        // Instagram já conectado, redirecionar direto ao dashboard.
+        const status = await getOnboardingStatus();
+        if (status.status === "done") {
+          const meta = await getMetaStatus();
+          if (meta.connected) {
+            router.replace("/dashboard");
+            return;
+          }
         }
 
         // Retornar à etapa onde parou
