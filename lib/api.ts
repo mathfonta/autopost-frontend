@@ -87,6 +87,32 @@ export async function sendOnboardingMessage(message: string): Promise<Onboarding
   return data;
 }
 
+// ─── Agente Scout (Epic 22, Story 22.5) ──────────────────────────
+
+export interface ScoutInsights {
+  refined_niche: string;
+  recurring_topics: string[];
+  visual_style: string;
+  audience_notes: string;
+  suggested_segment: string | null;
+  confidence: number;
+}
+
+export interface ScoutStatus {
+  scout_status: "pending" | "running" | "done" | "skipped" | "failed";
+  scout_insights: ScoutInsights | null;
+}
+
+export async function getScoutStatus(): Promise<ScoutStatus> {
+  const { data } = await api.get<ScoutStatus>("/onboarding/scout");
+  return data;
+}
+
+export async function acceptScoutSuggestion(): Promise<{ updated: boolean; segment: string | null }> {
+  const { data } = await api.post("/onboarding/scout/accept");
+  return data;
+}
+
 // ─── Meta / Instagram ───────────────────────────────────────────
 
 export interface MetaStatus {
