@@ -96,10 +96,21 @@ export function SubStrategySelector({ postTypeId, onBack, onSelect, recommendedS
                   </span>
                 )}
 
-                {/* Linha principal — clicável para selecionar */}
-                <button
+                {/* Linha principal — clicável para selecionar.
+                    Usa div+role="button" (não <button>) porque contém o botão
+                    do chevron dentro — HTML não permite <button> aninhado em
+                    <button> (causava erro de hidratação em produção). */}
+                <div
+                  role="button"
+                  tabIndex={0}
                   onClick={() => onSelect(s.id)}
-                  className="tap flex w-full items-center gap-4 px-4 py-3.5 text-left"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      onSelect(s.id);
+                    }
+                  }}
+                  className="tap flex w-full items-center gap-4 px-4 py-3.5 text-left cursor-pointer"
                   style={{ paddingTop: isRecommended ? "22px" : undefined }}
                 >
                   {/* Ícone */}
@@ -141,7 +152,7 @@ export function SubStrategySelector({ postTypeId, onBack, onSelect, recommendedS
                       : <ChevronDown size={16} strokeWidth={2.5} />
                     }
                   </button>
-                </button>
+                </div>
 
                 {/* Conteúdo expandido */}
                 {isExpanded && (
