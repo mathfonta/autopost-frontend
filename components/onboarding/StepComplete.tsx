@@ -169,7 +169,7 @@ export function StepComplete() {
           Como funciona
         </p>
         {[
-          { icon: Camera, text: "Tire uma foto e envie via WhatsApp ou API" },
+          { icon: Camera, text: "Escolha o formato e envie a foto direto no app" },
           { icon: CheckCircle, text: "O AutoPost gera a legenda e processa a imagem" },
           { icon: CheckCircle, text: "Você aprova com um toque — o post vai ao ar" },
         ].map(({ icon: Icon, text }, i) => (
