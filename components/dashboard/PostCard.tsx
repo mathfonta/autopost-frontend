@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ExternalLink, ImageOff, Play, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, ExternalLink, ImageOff, Play, Trash2, X } from "lucide-react";
 import { StatusBadge } from "./StatusBadge";
 import { ApprovalButtons } from "./ApprovalButtons";
 import { CaptionEditor } from "./CaptionEditor";
@@ -79,6 +79,7 @@ export function PostCard({ post, onAction, onOpen }: PostCardProps) {
   const [imgError, setImgError] = useState(false);
   const [editedCaption, setEditedCaption] = useState<string | null>(null);
   const [captionEdited, setCaptionEdited] = useState(post.caption_edited);
+  const [carouselIndex, setCarouselIndex] = useState<number | null>(null);
 
   const caption = editedCaption ?? getCaption(post);
   const permalink = getPermalink(post);
@@ -87,6 +88,7 @@ export function PostCard({ post, onAction, onOpen }: PostCardProps) {
   const isRejected = post.status === "rejected";
   const isVideo = post.content_type === "reels" || post.content_type === "story";
   const imageUrl = post.design_result?.processed_photo_url ?? post.photo_url;
+  const hasMultiplePhotos = (post.photo_urls?.length ?? 0) > 1;
 
   const handleCaptionSave = (newCaption: string) => {
     setEditedCaption(newCaption);
@@ -104,14 +106,20 @@ export function PostCard({ post, onAction, onOpen }: PostCardProps) {
       {/* Imagem */}
       <div
         className="relative aspect-square bg-gray-100 cursor-pointer"
-        onClick={onOpen ?? (() => router.push(`/posts/${post.id}`))}
-        title={onOpen ? "Revisar post" : "Ver preview completo"}
+        onClick={
+          hasMultiplePhotos
+            ? () => setCarouselIndex(0)
+            : onOpen ?? (() => router.push(`/posts/${post.id}`))
+        }
+        title={hasMultiplePhotos ? "Ver todas as fotos" : onOpen ? "Revisar post" : "Ver preview completo"}
       >
         {isVideo ? (
           <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-gray-900">
             <Play className="h-10 w-10 text-white opacity-80" fill="white" />
             <span className="text-xs text-gray-300 font-medium capitalize">{post.content_type}</span>
           </div>
+        ) : hasMultiplePhotos ? (
+          <MultiPhotoStrip urls={post.photo_urls as string[]} />
         ) : !imgError ? (
           <img
             src={imageUrl}
@@ -129,6 +137,14 @@ export function PostCard({ post, onAction, onOpen }: PostCardProps) {
           <StatusBadge status={post.status} />
         </div>
       </div>
+
+      {hasMultiplePhotos && carouselIndex !== null && (
+        <PhotoCarouselModal
+          urls={post.photo_urls as string[]}
+          startIndex={carouselIndex}
+          onClose={() => setCarouselIndex(null)}
+        />
+      )}
 
       {/* Conteúdo */}
       {isAwaitingApproval ? (
@@ -222,6 +238,96 @@ function FailedCard({ post, onDeleted }: { post: ContentRequest; onDeleted: () =
       <div className="flex justify-end">
         <DeleteButton postId={post.id} onDeleted={onDeleted} />
       </div>
+    </div>
+  );
+}
+
+function MultiPhotoStrip({ urls }: { urls: string[] }) {
+  const visible = urls.slice(0, 3);
+  const remaining = urls.length - visible.length;
+
+  return (
+    <div className="w-full h-full grid grid-cols-3 gap-0.5">
+      {visible.map((url, i) => {
+        const isLast = i === visible.length - 1;
+        return (
+          <div key={i} className="relative bg-gray-100 overflow-hidden">
+            <img src={url} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
+            {isLast && remaining > 0 && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                <span className="text-white text-sm font-bold">+{remaining}</span>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function PhotoCarouselModal({
+  urls,
+  startIndex,
+  onClose,
+}: {
+  urls: string[];
+  startIndex: number;
+  onClose: () => void;
+}) {
+  const [index, setIndex] = useState(startIndex);
+
+  const goPrev = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIndex((i) => (i - 1 + urls.length) % urls.length);
+  };
+  const goNext = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIndex((i) => (i + 1) % urls.length);
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
+      onClick={onClose}
+    >
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 text-white/80 hover:text-white"
+        aria-label="Fechar"
+      >
+        <X className="h-7 w-7" />
+      </button>
+
+      <span className="absolute top-4 left-4 text-white/80 text-sm font-medium">
+        {index + 1} / {urls.length}
+      </span>
+
+      {urls.length > 1 && (
+        <button
+          onClick={goPrev}
+          className="absolute left-2 text-white/80 hover:text-white p-2"
+          aria-label="Foto anterior"
+        >
+          <ChevronLeft className="h-8 w-8" />
+        </button>
+      )}
+
+      <img
+        src={urls[index]}
+        alt={`Foto ${index + 1} de ${urls.length}`}
+        className="max-h-[85vh] max-w-[90vw] object-contain"
+        onClick={(e) => e.stopPropagation()}
+      />
+
+      {urls.length > 1 && (
+        <button
+          onClick={goNext}
+          className="absolute right-2 text-white/80 hover:text-white p-2"
+          aria-label="Próxima foto"
+        >
+          <ChevronRight className="h-8 w-8" />
+        </button>
+      )}
     </div>
   );
 }
