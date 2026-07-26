@@ -65,9 +65,10 @@ export async function scheduleContentRequest(id: string, scheduledFor: string): 
 }
 
 export interface BestPostingTime {
-  horario: string;
-  fonte: "historico" | "exa" | "fallback";
+  horario: string | null;
+  fonte: "historico" | "exa" | "sem_dados";
   confianca: "alta" | "media" | "baixa";
+  mensagem?: string | null;
 }
 
 export async function getBestPostingTime(format?: string): Promise<BestPostingTime> {

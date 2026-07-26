@@ -7,10 +7,9 @@ import { getBestPostingTime, type BestPostingTime } from "@/lib/api";
 
 const MAX_SCHEDULE_DAYS = 30;
 
-const FONTE_LABEL: Record<BestPostingTime["fonte"], string> = {
+const FONTE_LABEL: Partial<Record<BestPostingTime["fonte"], string>> = {
   historico: "baseado no seu histórico de posts",
   exa: "baseado em boas práticas do seu nicho",
-  fallback: "horário recomendado para o seu segmento",
 };
 
 interface ScheduleModalProps {
@@ -60,7 +59,10 @@ export function ScheduleModal({
       .then((data) => {
         if (cancelled) return;
         setSuggestion(data);
-        if (!userEdited) {
+        // "sem_dados" não traz horário real — mantém o default silencioso
+        // já preenchido (copy_result.suggested_time ou 19:00), só a partir
+        // de fonte real (histórico/Exa) o valor do campo é atualizado.
+        if (!userEdited && data.horario) {
           setValue(toDatetimeLocalValue(nextOccurrence(data.horario)));
         }
       })
@@ -103,11 +105,15 @@ export function ScheduleModal({
     onConfirm(chosen.toISOString());
   };
 
+  // Enquanto a análise real (histórico/Exa) não chega, não mostra nenhum
+  // horário como se fosse recomendação — o valor inicial do campo (baseado
+  // em copy_result.suggested_time) é só um palpite de conveniência para
+  // pré-preencher o seletor, nunca apresentado como análise de dados.
   const reasonText = suggestion
-    ? `Sugerido: ${suggestion.horario} — ${FONTE_LABEL[suggestion.fonte]}`
-    : initialSuggestedTime
-      ? `Sugerido: ${initialSuggestedTime}`
-      : null;
+    ? suggestion.fonte === "sem_dados"
+      ? suggestion.mensagem
+      : `Sugerido: ${suggestion.horario} — ${FONTE_LABEL[suggestion.fonte]}`
+    : "Calculando o melhor horário com base nos seus dados...";
 
   return (
     <div
