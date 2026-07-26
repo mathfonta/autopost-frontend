@@ -594,6 +594,7 @@ function GalleryGrid({
     <div className="grid grid-cols-3 gap-2">
       {posts.map((post) => {
         const isVideo    = post.content_type === "reels" || post.content_type === "story";
+        const thumbnailUrl = isVideo ? post.design_result?.thumbnail_url : null;
         const imageUrl   = isVideo ? null : (post.design_result?.processed_photo_url ?? post.photo_url);
         const pub        = post.status === "published";
         const pendingPub = post.status === "publishing" || post.status === "approved";
@@ -606,9 +607,14 @@ function GalleryGrid({
             onClick={() => router.push(`/posts/${post.id}`)}
           >
             {isVideo ? (
-              <div className="flex h-full w-full flex-col items-center justify-center gap-1 bg-gray-900">
-                <Play className="h-7 w-7 text-white opacity-80" fill="white" />
-                {pt && <span className="text-[8px] font-bold text-gray-400 capitalize">{pt.label}</span>}
+              <div className="relative h-full w-full bg-gray-900">
+                {thumbnailUrl && (
+                  <img src={thumbnailUrl} alt="" className="absolute inset-0 h-full w-full object-cover opacity-70" />
+                )}
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
+                  <Play className="h-7 w-7 text-white opacity-90" fill="white" />
+                  {pt && <span className="text-[8px] font-bold text-gray-300 capitalize">{pt.label}</span>}
+                </div>
               </div>
             ) : imageUrl ? (
               <img src={imageUrl} alt="" className="block h-full w-full object-cover" />

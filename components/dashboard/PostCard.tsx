@@ -114,9 +114,18 @@ export function PostCard({ post, onAction, onOpen }: PostCardProps) {
         title={hasMultiplePhotos ? "Ver todas as fotos" : onOpen ? "Revisar post" : "Ver preview completo"}
       >
         {isVideo ? (
-          <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-gray-900">
-            <Play className="h-10 w-10 text-white opacity-80" fill="white" />
-            <span className="text-xs text-gray-300 font-medium capitalize">{post.content_type}</span>
+          <div className="relative w-full h-full bg-gray-900">
+            {post.design_result?.thumbnail_url && (
+              <img
+                src={post.design_result.thumbnail_url}
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover opacity-70"
+              />
+            )}
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+              <Play className="h-10 w-10 text-white opacity-90" fill="white" />
+              <span className="text-xs text-gray-200 font-medium capitalize">{post.content_type}</span>
+            </div>
           </div>
         ) : hasMultiplePhotos ? (
           <MultiPhotoStrip urls={post.photo_urls as string[]} />

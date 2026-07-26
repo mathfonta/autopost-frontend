@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Calendar } from "lucide-react";
+import { Calendar, Play } from "lucide-react";
 import { getScheduledPosts, cancelScheduledPost, rescheduleContentRequest } from "@/lib/api";
 import { ScheduleModal } from "./ScheduleModal";
 import { useToast } from "@/components/ui/toast";
@@ -134,14 +134,22 @@ export function ScheduledPostsSection({ onChange }: ScheduledPostsSectionProps) 
       ) : (
         <div className="space-y-2">
           {posts.map((post) => {
-            const imageUrl = post.design_result?.processed_photo_url ?? post.photo_url;
+            const isVideo = post.content_type === "reels" || post.content_type === "story";
+            const imageUrl = isVideo
+              ? post.design_result?.thumbnail_url
+              : (post.design_result?.processed_photo_url ?? post.photo_url);
             return (
               <div
                 key={post.id}
                 className="flex items-center gap-3 rounded-2xl border border-(--border) bg-(--bg-card) p-3"
               >
-                <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-(--bg-input)">
+                <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-(--bg-input)">
                   {imageUrl && <img src={imageUrl} alt="" className="h-full w-full object-cover" />}
+                  {isVideo && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                      <Play className="h-4 w-4 text-white" fill="white" />
+                    </div>
+                  )}
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[13px] font-semibold text-(--text-1)">

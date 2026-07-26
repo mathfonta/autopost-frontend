@@ -19,6 +19,8 @@ export interface DesignResult {
   dimensions: string;
   file_size_kb: number;
   r2_key: string;
+  /** Só presente para vídeos (reels/story) — frame extraído do meio do vídeo. */
+  thumbnail_url?: string;
 }
 
 export interface CopyResult {
