@@ -19,6 +19,7 @@ import { SubStrategySelector } from "@/components/dashboard/SubStrategySelector"
 import { IntentSelector } from "@/components/dashboard/IntentSelector";
 import { GeneratingScreen } from "@/components/dashboard/GeneratingScreen";
 import { ApprovalScreen }   from "@/components/dashboard/ApprovalScreen";
+import { ScheduledPostsSection } from "@/components/dashboard/ScheduledPostsSection";
 import { ThemeSelector }    from "@/components/dashboard/ThemeSelector";
 import { POST_TYPE_MAP } from "@/lib/post-types";
 import { api, getMetaStatus, getStreak, retryContentRequest, createAutonomousCarousel, getStrategyRecommendation, type MetaStatus, type StreakData } from "@/lib/api";
@@ -520,6 +521,9 @@ export default function DashboardPage() {
               </div>
             </section>
           )}
+
+          {/* Posts agendados — Epic 19, Story 19.5 */}
+          <ScheduledPostsSection onChange={refresh} />
 
           {/* Publicações recentes — galeria compacta */}
           {(publishedPosts.length > 0 || failedPosts.length > 0) && (

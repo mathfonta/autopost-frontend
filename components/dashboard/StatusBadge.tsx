@@ -1,4 +1,4 @@
-import { Clock, Eye, PenLine, Image, ThumbsUp, Send, CheckCircle, XCircle, ThumbsDown } from "lucide-react";
+import { Calendar, Clock, Eye, PenLine, Image, ThumbsUp, Send, CheckCircle, XCircle, ThumbsDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ContentStatus } from "@/lib/types";
 
@@ -12,6 +12,7 @@ const STATUS_CONFIG: Record<
   design:            { label: "Preparando imagem",     color: "bg-blue-100 text-blue-700",    icon: Image },
   awaiting_approval: { label: "Aguarda aprovação",     color: "bg-yellow-100 text-yellow-700",icon: ThumbsUp },
   approved:          { label: "Aprovado",              color: "bg-blue-100 text-blue-700",    icon: Send },
+  scheduled:         { label: "Agendado",              color: "bg-purple-100 text-purple-700",icon: Calendar },
   publishing:        { label: "Publicando...",          color: "bg-blue-100 text-blue-700",    icon: Send },
   published:         { label: "Publicado ✓",            color: "bg-green-100 text-green-700",  icon: CheckCircle },
   failed:            { label: "Falhou",                color: "bg-red-100 text-red-700",      icon: XCircle },

@@ -7,6 +7,7 @@ export type ContentStatus =
   | "design"
   | "awaiting_approval"
   | "approved"
+  | "scheduled"
   | "publishing"
   | "published"
   | "failed"
@@ -48,6 +49,7 @@ export interface ContentRequest {
   publish_result: PublishResult | null;
   caption_edited: boolean;
   retry_count: number;
+  scheduled_for: string | null;
   content_type: string | null;
   caption_long: string | null;
   caption_short: string | null;

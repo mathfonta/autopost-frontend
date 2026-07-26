@@ -194,6 +194,8 @@ export function PostCard({ post, onAction, onOpen }: PostCardProps) {
               retryCount={post.retry_count}
               captionOverride={editedCaption}
               onAction={onAction}
+              contentType={post.content_type}
+              suggestedTime={post.copy_result?.suggested_time}
             />
           </div>
         )

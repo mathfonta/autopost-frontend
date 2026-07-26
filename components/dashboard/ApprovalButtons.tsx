@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Check, X, RefreshCw } from "lucide-react";
+import { Calendar, Check, X, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RejectModal } from "./RejectModal";
-import { approveContentRequest, rejectContentRequest, retryContentRequest } from "@/lib/api";
+import { ScheduleModal } from "./ScheduleModal";
+import { approveContentRequest, rejectContentRequest, retryContentRequest, scheduleContentRequest } from "@/lib/api";
 import { useToast } from "@/components/ui/toast";
 import { track } from "@/lib/analytics";
 
@@ -15,18 +16,29 @@ interface ApprovalButtonsProps {
   retryCount: number;
   onAction: () => void;
   captionOverride?: string | null;
+  contentType?: string | null;
+  suggestedTime?: string | null;
 }
 
-export function ApprovalButtons({ postId, retryCount, onAction, captionOverride }: ApprovalButtonsProps) {
+export function ApprovalButtons({
+  postId,
+  retryCount,
+  onAction,
+  captionOverride,
+  contentType,
+  suggestedTime,
+}: ApprovalButtonsProps) {
   const [approving, setApproving] = useState(false);
   const [showReject, setShowReject] = useState(false);
   const [rejecting, setRejecting] = useState(false);
   const [showRetryModal, setShowRetryModal] = useState(false);
   const [retrying, setRetrying] = useState(false);
+  const [showSchedule, setShowSchedule] = useState(false);
+  const [scheduling, setScheduling] = useState(false);
   const { toast } = useToast();
 
   const canRetry = retryCount < RETRY_MAX;
-  const isDisabled = approving || retrying;
+  const isDisabled = approving || retrying || scheduling;
 
   const handleApprove = async () => {
     setApproving(true);
@@ -55,6 +67,21 @@ export function ApprovalButtons({ postId, retryCount, onAction, captionOverride 
       toast("Erro ao rejeitar. Tente novamente.", "error");
     } finally {
       setRejecting(false);
+    }
+  };
+
+  const handleSchedule = async (scheduledForISO: string) => {
+    setScheduling(true);
+    try {
+      await scheduleContentRequest(postId, scheduledForISO);
+      track("post_scheduled", { post_id: postId, scheduled_for: scheduledForISO });
+      toast("Post agendado! Vai publicar automaticamente no horário marcado.");
+      setShowSchedule(false);
+      onAction();
+    } catch {
+      toast("Erro ao agendar. Tente novamente.", "error");
+    } finally {
+      setScheduling(false);
     }
   };
 
@@ -119,6 +146,29 @@ export function ApprovalButtons({ postId, retryCount, onAction, captionOverride 
           </Button>
         )}
       </div>
+
+      {/* Agendar — opção secundária, não bloqueia o fluxo de publicar agora */}
+      <Button
+        variant="outline"
+        size="sm"
+        className="w-full mt-2"
+        onClick={() => setShowSchedule(true)}
+        disabled={isDisabled}
+      >
+        <Calendar className="h-4 w-4" />
+        Agendar
+      </Button>
+
+      {/* Modal agendar */}
+      {showSchedule && (
+        <ScheduleModal
+          onConfirm={handleSchedule}
+          onCancel={() => setShowSchedule(false)}
+          loading={scheduling}
+          initialSuggestedTime={suggestedTime}
+          contentType={contentType}
+        />
+      )}
 
       {/* Modal rejeição */}
       {showReject && (

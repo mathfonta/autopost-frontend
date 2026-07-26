@@ -285,6 +285,8 @@ export function ApprovalScreen({ post, onBack, onAction }: ApprovalScreenProps) 
           retryCount={post.retry_count}
           captionOverride={activeCaption !== defaultCaption ? activeCaption : null}
           onAction={onAction}
+          contentType={post.content_type}
+          suggestedTime={post.copy_result?.suggested_time}
         />
       </div>
     </div>

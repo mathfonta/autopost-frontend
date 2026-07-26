@@ -1,7 +1,7 @@
 import axios from "axios";
 import type { AxiosError, InternalAxiosRequestConfig } from "axios";
 import Cookies from "js-cookie";
-import type { ContentRequest, ContentRequestListResponse } from "./types";
+import type { ContentRequest, ContentRequestListResponse, ContentStatus } from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -18,11 +18,17 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-export async function getContentRequests(page = 1): Promise<ContentRequestListResponse> {
+export async function getContentRequests(page = 1, status?: string): Promise<ContentRequestListResponse> {
   const { data } = await api.get<ContentRequestListResponse>("/content-requests", {
-    params: { page, page_size: 20 },
+    params: { page, page_size: 20, ...(status ? { status } : {}) },
   });
   return data;
+}
+
+/** Posts agendados do cliente, ordenados por scheduled_for crescente (Story 19.5). */
+export async function getScheduledPosts(): Promise<ContentRequest[]> {
+  const data = await getContentRequests(1, "scheduled");
+  return data.items;
 }
 
 export async function getContentRequest(id: string): Promise<ContentRequest> {
@@ -40,6 +46,47 @@ export async function rejectContentRequest(id: string, reason?: string): Promise
 
 export async function patchContentRequest(id: string, caption: string): Promise<ContentRequest> {
   const { data } = await api.patch<ContentRequest>(`/content-requests/${id}`, { caption });
+  return data;
+}
+
+// ─── Agendamento (Epic 19, Story 19.4) ───────────────────────────
+
+export interface ScheduleResponse {
+  id: string;
+  status: ContentStatus;
+  scheduled_for: string;
+}
+
+export async function scheduleContentRequest(id: string, scheduledFor: string): Promise<ScheduleResponse> {
+  const { data } = await api.post<ScheduleResponse>(`/content-requests/${id}/schedule`, {
+    scheduled_for: scheduledFor,
+  });
+  return data;
+}
+
+export interface BestPostingTime {
+  horario: string;
+  fonte: "historico" | "exa" | "fallback";
+  confianca: "alta" | "media" | "baixa";
+}
+
+export async function getBestPostingTime(format?: string): Promise<BestPostingTime> {
+  const { data } = await api.get<BestPostingTime>("/insights/best-posting-time", {
+    params: format ? { format } : undefined,
+  });
+  return data;
+}
+
+// ─── Gerenciamento de agendados (Epic 19, Story 19.5) ────────────
+
+export async function cancelScheduledPost(id: string): Promise<void> {
+  await api.post(`/content-requests/${id}/schedule/cancel`);
+}
+
+export async function rescheduleContentRequest(id: string, scheduledFor: string): Promise<ScheduleResponse> {
+  const { data } = await api.patch<ScheduleResponse>(`/content-requests/${id}/schedule`, {
+    scheduled_for: scheduledFor,
+  });
   return data;
 }
 
